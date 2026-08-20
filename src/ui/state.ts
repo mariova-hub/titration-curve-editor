@@ -91,10 +91,10 @@ export const ASPECT_RATIO_PRESETS: Readonly<Record<Exclude<AspectRatioPreset, "c
 };
 
 const DEFAULT_ASPECT_RATIO: Readonly<AspectRatioState> = {
-  locked: false,
-  widthRatioInput: "3",
-  heightRatioInput: "2",
-  preset: "free",
+  locked: true,
+  widthRatioInput: "4",
+  heightRatioInput: "3",
+  preset: "4:3",
   error: null,
 };
 
@@ -373,11 +373,25 @@ export function applyPresetToState(
   preset: "exam" | "teaching",
   dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
 ): AppState {
-  return updateGraphStyle(
+  const updated = updateGraphStyle(
     state,
     (style) => preset === "exam" ? applyExamPreset(style) : applyTeachingPreset(style),
     dependencies,
   );
+  const [widthRatio, heightRatio] = preset === "exam" ? [4, 3] : [3, 2];
+  return {
+    ...updated,
+    rendering: {
+      ...updated.rendering,
+      aspectRatio: {
+        locked: true,
+        widthRatioInput: String(widthRatio),
+        heightRatioInput: String(heightRatio),
+        preset: preset === "exam" ? "4:3" : "3:2",
+        error: null,
+      },
+    },
+  };
 }
 
 export function updateXMax(

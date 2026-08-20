@@ -29,6 +29,18 @@ describe("GraphStyle defaults and pure presets", () => {
   it("creates a monochrome Exam preset with guides and grids off", () => {
     const style = createExamGraphStyle(30);
     expect(style.presetOrigin).toBe("exam");
+    expect(style).toMatchObject({ width: 320, height: 240 });
+    expect(style.width / style.height).toBe(4 / 3);
+    expect(style.typography).toMatchObject({
+      tickLabelFontSizePt: 10.5,
+      axisLabelFontSizePt: 10.5,
+      titleFontSizePt: 13.5,
+    });
+    expect(style.curve.width).toBe(2);
+    expect(style.xAxis.line.width).toBe(2);
+    expect(style.yAxis.line.width).toBe(2);
+    expect(style.xAxis.tickWidth).toBe(1.5);
+    expect(style.yAxis.tickWidth).toBe(1.5);
     expect(style.horizontalGrid.visible).toBe(false);
     expect(style.verticalGrid.visible).toBe(false);
     expect(style.equivalenceGuides.showAll).toBe(false);
@@ -42,6 +54,7 @@ describe("GraphStyle defaults and pure presets", () => {
   it("creates a Teaching preset with grids, guides, markers, and labels", () => {
     const style = createTeachingGraphStyle(37.5);
     expect(style.presetOrigin).toBe("teaching");
+    expect(style).toMatchObject({ width: 720, height: 480 });
     expect(style.horizontalGrid.visible).toBe(true);
     expect(style.verticalGrid.visible).toBe(true);
     expect(style.equivalenceGuides.showAll).toBe(true);

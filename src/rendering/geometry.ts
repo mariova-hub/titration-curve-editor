@@ -34,6 +34,15 @@ export function getOutsideTickExtent(axis: AxisStyle): number {
   return axis.tickDirection === "both" ? length / 2 : length;
 }
 
+/** A deterministic approximation used only to reserve layout space. */
+export function estimateHorizontalTextWidth(text: string, fontSize: number): number {
+  const widthInEm = Array.from(text).reduce(
+    (sum, character) => sum + (/^[\x00-\xff]$/.test(character) ? 0.6 : 1),
+    0,
+  );
+  return Math.max(fontSize, widthInEm * fontSize);
+}
+
 export function calculatePlotArea(style: GraphStyle): PlotArea {
   const tickLabelFontSize = ptToUserUnits(style.typography.tickLabelFontSizePt);
   const axisLabelFontSize = ptToUserUnits(style.typography.axisLabelFontSizePt);
@@ -58,9 +67,18 @@ export function calculatePlotArea(style: GraphStyle): PlotArea {
     (style.yAxis.showTickLabels
       ? Math.max(38, tickLabelFontSize * 3)
       : 0);
+  const horizontalYLabelWidth = estimateHorizontalTextWidth(
+    style.yAxis.label,
+    axisLabelFontSize,
+  );
+  const yLabelCrossExtent = style.yAxis.labelOrientation === "horizontal"
+    ? horizontalYLabelWidth / 2
+    : axisLabelFontSize;
   const yLabelSpace = style.yAxis.labelPosition.mode === "auto"
-    ? axisLabelFontSize + 16
-    : style.yAxis.labelPosition.offsetPx + axisLabelFontSize + 8;
+    ? (style.yAxis.labelOrientation === "horizontal"
+      ? horizontalYLabelWidth
+      : axisLabelFontSize) + 16
+    : style.yAxis.labelPosition.offsetPx + yLabelCrossExtent + 8;
   const leftMargin = style.yAxis.visible
     ? style.yAxis.showLabel && style.yAxis.labelPosition.mode === "custom"
       ? Math.max(yOutsideContent, yLabelSpace)

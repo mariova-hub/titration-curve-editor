@@ -20,6 +20,7 @@ const xAxis: AxisStyle = {
   tickLength: 6,
   tickWidth: 1,
   tickDirection: "outside",
+  labelOrientation: "counterclockwise",
   labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
 };
 
@@ -42,6 +43,7 @@ const yAxis: AxisStyle = {
   tickLength: 4,
   tickWidth: 0.75,
   tickDirection: "inside",
+  labelOrientation: "clockwise",
   labelPosition: { mode: "custom", alongAxis: 0.25, offsetPx: 20 },
 };
 

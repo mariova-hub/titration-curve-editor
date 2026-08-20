@@ -27,7 +27,7 @@
 ```
 
 - Controlsはカテゴリ単位で明確に分ける。
-- UIの標準表示言語は日本語とする。内部identifierと、化学式、pH、SVG、PNG、mol/L、mL等の標準表記はこの限りではない。
+- UIの標準表示言語は日本語とする。内部identifierと、pH、SVG、PNG、mol/L、mL等の標準表記はこの限りではない。物質マスターのcanonical formulaはASCIIのまま保持し、Substance selectでは表示専用utilityにより数字0〜9をUnicode下付きへ変換する。電荷上付きへの一般化はMVP対象外とする。
 - Previewは設定変更後の同一SVG描画結果を表示する。
 - 狭い画面では上下配置へ切り替えてよいが、入力項目・意味・描画結果を変更しない。
 - MVPはローカルブラウザだけで動作し、ログインやクラウド保存を要求しない。
@@ -141,6 +141,7 @@ X軸とY軸はそれぞれ次を独立に持つ。
 - `tick direction`: outside / inside / both
 - `show zero label`: 原点0の数値表示ON/OFF
 - `axis label position`: auto / custom、軸上位置、軸からの距離
+- `axis label orientation`: Y軸のみhorizontal / counterclockwise / clockwise
 
 `min < max`を必須とする。X軸単位は表示上mL、Calculation結果はLで保持し、座標変換前のview modelで明示的に変換する。Y軸はpHである。
 
@@ -182,6 +183,7 @@ tick生成はsampling点から独立し、curve point数や当量点数を増減
 - `custom`では`alongAxis`を0〜1で指定する。X軸は左から右、Y軸は下から上へ増加する。
 - `offsetPx`は軸から外側への距離とし、UIでは0〜100 pxに制限する。Y軸labelのrotation中心は指定後のX/Y座標と一致させる。
 - 目盛り方向・原点表示・軸ラベル位置の変更はrendererだけを再実行する。
+- Y軸ラベルは横書き（`0`）、左90°（`-90`）、右90°（`+90`）を水平text基準の絶対向きとして選択可能とし、既定は従来どおり左90°とする。auto/custom、`alongAxis`、`offsetPx`で先に座標を決定し、その座標を必要な場合の単一rotation中心に用いる。横書きではtransformを生成せず、既存transformへのrotation連結は禁止する。±90°間ではmarginを維持し、横書きでは簡易文字幅推定を左marginへ反映する。
 
 ## 8. Guides / Markers
 
@@ -212,8 +214,12 @@ Presetは`GraphStyle`へ既定値を適用する操作である。Preset適用�
 
 ### 9.1 Exam
 
+- figure 320×240 px、4:3
 - white background
-- black curve
+- black curve、solid、width 2 px
+- black axes、solid、width 2 px
+- major tick width 1.5 px
+- tick labels 10.5 pt、axis labels 10.5 pt、title 13.5 pt
 - solid curve
 - simple ticks
 - no grid
@@ -222,7 +228,7 @@ Presetは`GraphStyle`へ既定値を適用する操作である。Preset適用�
 - no characteristic markers
 - no annotations
 
-試験問題でコピー・印刷しやすい簡潔なモノクロ図を生成する。axis labelとtick labelの初期表示は受入れ前にpreset詳細値として固定するが、個別ON/OFF可能である。
+Microsoft Wordの試験問題でコピー・印刷しやすい小型モノクロ図を生成する。PNG固有の線幅・font補正は行わず、同じGraphStyleをSVG/PNGへ反映する。axis labelとtick labelは個別ON/OFF可能である。
 
 ### 9.2 Teaching
 
@@ -251,7 +257,7 @@ Preset適用後の個別変更は`presetOrigin`を履歴情報として残して
 
 ### 10.1 Typography
 
-`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeとfont familyを3系統で独立して保持する。各font size fieldは接尾辞`Pt`でpt単位を明示し、正のfinite値とする。UIは6〜48 pt、step 0.5を基本とし、SVG textの`font-size`属性には`pt`を付ける。layout/marginのみ共通utilityで`1 pt = 96 / 72 = 4 / 3` SVG user unitへ換算し、経験的な換算係数を追加しない。各font familyは空でない文字列とし、renderer内へ固定font設定を残さない。ゴシック体、明朝体、MS系日本語フォント、sans-serif、serif、Century、任意指定を各系統のUIで提供し、属性値はXML escapeする。Century stackは`"Century", "Yu Mincho", "MS Mincho", serif`とし、英数字ではCenturyを優先し、日本語グリフは後続fontへfallbackする。Exam presetは9 / 10.5 / 13.5 pt、Teaching presetは10 / 11 / 14 ptとし、適用後の個別変更を許可する。SVGへフォントファイルやweb fontを埋め込まず、別環境ではfallbackされることをUI/READMEへ明記する。font変更はcurve point、sampling、化学計算結果を変更しない。
+`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeとfont familyを3系統で独立して保持する。各font size fieldは接尾辞`Pt`でpt単位を明示し、正のfinite値とする。UIは6〜48 pt、step 0.5を基本とし、SVG textの`font-size`属性には`pt`を付ける。layout/marginのみ共通utilityで`1 pt = 96 / 72 = 4 / 3` SVG user unitへ換算し、経験的な換算係数を追加しない。各font familyは空でない文字列とし、renderer内へ固定font設定を残さない。ゴシック体、明朝体、MS系日本語フォント、sans-serif、serif、Century、任意指定を各系統のUIで提供し、属性値はXML escapeする。Century stackは`"Century", "Yu Mincho", "MS Mincho", serif`とし、英数字ではCenturyを優先し、日本語グリフは後続fontへfallbackする。Exam presetは10.5 / 10.5 / 13.5 pt、Teaching presetは10 / 11 / 14 ptとし、適用後の個別変更を許可する。SVGへフォントファイルやweb fontを埋め込まず、別環境ではfallbackされることをUI/READMEへ明記する。font変更はcurve point、sampling、化学計算結果を変更しない。
 
 ## 11. Rendering pipeline
 
@@ -357,7 +363,7 @@ render modelは少なくとも次を確定済み値として持つ。
 
 PNGはSVG出力をCanvas等へ描画して生成する。独立した座標計算、axis生成、curve描画を実装しない。
 
-`PngExportOptions`は`scale`と`background`を持つ。UIは1倍・2倍・4倍を提供し、既定は2倍とする。scaleはSVGの論理寸法やGraphStyleを変更せず、Canvas幅・高さだけへ乗算する。背景は`preserve`（SVG設定を使用）、`white`、`transparent`を扱う。transparent指定時はrendererが生成した背景rectだけをrasterize用SVGから除外し、white指定時は描画前にCanvasを白でfillする。
+`PngExportOptions`は`scale`と`background`を持つ。UIは1倍・2倍・4倍を維持し、Word貼り付け・印刷の標準は2倍、高解像度用途には4倍を利用可能とする。scaleはSVGの論理寸法やGraphStyleを変更せず、Canvas幅・高さだけへ乗算する。背景は`preserve`（SVG設定を使用）、`white`、`transparent`を扱う。transparent指定時はrendererが生成した背景rectだけをrasterize用SVGから除外し、white指定時は描画前にCanvasを白でfillする。
 
 推奨手順:
 
@@ -497,6 +503,7 @@ Renderingへ渡す前のcontract testとして、次を必須にする。詳細�
 - PNG専用rendererまたは別座標生成経路が存在しないことをmodule境界テストまたはcode reviewで確認する
 - 1倍・2倍・4倍の寸法、background mode、PNG MIME、filename、Canvas上限、toBlob null、Object URL cleanupを検証する
 - PNG設定変更・PNG Exportでcurve point、Calculation呼出数、SVG renderer呼出数が変化しない
+- UI化学式の下付き変換とcanonical formula不変、Examの320×240・4:3・typography・線幅、Y軸ラベルの0°/±90°、単一transform、custom回転中心を検証する
 - stale PreviewではPNG Exportを拒否し、多価系SVGも化学分岐なしで変換できる
 
 Canvasのpixel比較はブラウザ・font差の影響を受けるため、MVP自動テストではPNG Blob生成、MIME type、寸法、非空を中心に確認し、代表出力の目視確認を受入れ項目に加える。

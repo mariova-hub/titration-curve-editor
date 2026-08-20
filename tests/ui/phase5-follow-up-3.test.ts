@@ -34,7 +34,7 @@ describe("Phase 5 follow-up 3 typography UI", () => {
 
   it("starts with the Exam point-size preset", () => {
     expect(createAppState().rendering.graphStyle.typography).toMatchObject({
-      tickLabelFontSizePt: 9,
+      tickLabelFontSizePt: 10.5,
       axisLabelFontSizePt: 10.5,
       titleFontSizePt: 13.5,
     });

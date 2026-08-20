@@ -15,6 +15,7 @@ import { RenderingError } from "./errors";
 import {
   calculatePlotArea,
   createCoordinateTransform,
+  estimateHorizontalTextWidth,
   getOutsideTickExtent,
   type CoordinateTransform,
   type PlotArea,
@@ -76,6 +77,15 @@ function validateAxis(axis: AxisStyle, label: string): void {
   }
   if (!Number.isFinite(axis.labelPosition.offsetPx) || axis.labelPosition.offsetPx < 0) {
     throw new RenderingError(`${label}.labelPosition.offsetPx must be a non-negative finite number.`);
+  }
+  if (
+    axis.labelOrientation !== "horizontal" &&
+    axis.labelOrientation !== "counterclockwise" &&
+    axis.labelOrientation !== "clockwise"
+  ) {
+    throw new RenderingError(
+      `${label}.labelOrientation must be horizontal, counterclockwise, or clockwise.`,
+    );
   }
 }
 
@@ -180,6 +190,16 @@ function tickExtents(
   if (direction === "inside") return { inside: length, outside: 0 };
   if (direction === "both") return { inside: length / 2, outside: length / 2 };
   return { inside: 0, outside: length };
+}
+
+function renderAxisLabelTransform(
+  orientation: AxisStyle["labelOrientation"],
+  x: number,
+  y: number,
+): string {
+  if (orientation === "horizontal") return "";
+  const angle = orientation === "counterclockwise" ? -90 : 90;
+  return ` transform="rotate(${angle} ${formatSvgNumber(x)} ${formatSvgNumber(y)})"`;
 }
 
 function renderCurvePath(
@@ -323,7 +343,10 @@ function renderAxis(
     const axisFontSizePt = style.typography.axisLabelFontSizePt;
     const axisFontSize = ptToUserUnits(axisFontSizePt);
     const axisFontFamily = escapeXml(style.typography.axisLabelFontFamily);
-    const autoYLabelX = Math.max(18, axisFontSize + 4);
+    const horizontalYLabelWidth = estimateHorizontalTextWidth(axis.label, axisFontSize);
+    const autoYLabelX = axis.labelOrientation === "horizontal"
+      ? horizontalYLabelWidth / 2 + 4
+      : Math.max(18, axisFontSize + 4);
     const autoXLabelY = style.height - Math.max(12, axisFontSize * 0.25 + 6);
     const custom = axis.labelPosition.mode === "custom";
     const xLabelX = custom
@@ -334,10 +357,11 @@ function renderAxis(
     const yLabelY = custom
       ? plot.bottom - axis.labelPosition.alongAxis * plot.height
       : (plot.top + plot.bottom) / 2;
+    const yLabelTransform = renderAxisLabelTransform(axis.labelOrientation, yLabelX, yLabelY);
     labels.push(
       orientation === "x"
         ? `<text data-role="axis-label" data-axis="x" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(xLabelX)}" y="${formatSvgNumber(xLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSizePt)}pt" font-family="${axisFontFamily}">${escapeXml(axis.label)}</text>`
-        : `<text data-role="axis-label" data-axis="y" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(yLabelX)}" y="${formatSvgNumber(yLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSizePt)}pt" font-family="${axisFontFamily}" transform="rotate(-90 ${formatSvgNumber(yLabelX)} ${formatSvgNumber(yLabelY)})">${escapeXml(axis.label)}</text>`,
+        : `<text data-role="axis-label" data-axis="y" data-position-mode="${axis.labelPosition.mode}" data-orientation="${axis.labelOrientation}" x="${formatSvgNumber(yLabelX)}" y="${formatSvgNumber(yLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSizePt)}pt" font-family="${axisFontFamily}"${yLabelTransform}>${escapeXml(axis.label)}</text>`,
     );
   }
   return {

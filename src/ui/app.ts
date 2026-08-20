@@ -1,5 +1,6 @@
 import { SUBSTANCES } from "../chemistry";
 import type {
+  AxisLabelOrientation,
   AxisStyle,
   GraphStyle,
   LinePattern,
@@ -37,6 +38,7 @@ import {
   type UiErrorField,
 } from "./state";
 import { exportPngFromState } from "./png-export-action";
+import { formatChemicalFormulaForDisplay } from "./chemical-formula";
 
 const PATTERNS: ReadonlyArray<{ value: LinePattern; label: string }> = [
   { value: "solid", label: "実線" },
@@ -196,6 +198,12 @@ export const APP_TEMPLATE = `
                 <select id="y-label-position-mode"><option value="auto">自動</option><option value="custom">指定</option></select>
                 <label for="y-label-along-axis">軸上の位置</label><input id="y-label-along-axis" type="number" min="0" max="1" step="0.05" />
                 <label for="y-label-offset">軸からの距離 <span>px</span></label><input id="y-label-offset" type="number" min="0" max="100" step="1" />
+                <label for="y-label-orientation">軸ラベルの向き</label>
+                <select id="y-label-orientation">
+                  <option value="horizontal">横書き</option>
+                  <option value="counterclockwise">左に90°回転</option>
+                  <option value="clockwise">右に90°回転</option>
+                </select>
               </div>
             </fieldset>
           </div>
@@ -398,7 +406,7 @@ function populateSubstances(select: HTMLSelectElement): void {
     for (const substance of SUBSTANCES.filter(({ roles }) => roles.includes(role))) {
       const option = document.createElement("option");
       option.value = substance.id;
-      option.textContent = `${substance.displayNameJa} (${substance.formula})`;
+      option.textContent = `${substance.displayNameJa} (${formatChemicalFormulaForDisplay(substance.formula)})`;
       group.append(option);
     }
     select.append(group);
@@ -499,6 +507,12 @@ export function mountApp(root: HTMLElement): void {
     setValue(offset, String(axis.labelPosition.offsetPx));
     alongAxis.disabled = axis.labelPosition.mode === "auto";
     offset.disabled = axis.labelPosition.mode === "auto";
+    if (orientation === "y") {
+      setValue(
+        requiredElement<HTMLSelectElement>(root, "y-label-orientation"),
+        axis.labelOrientation,
+      );
+    }
   }
 
   function syncControls(): void {
@@ -699,6 +713,12 @@ export function mountApp(root: HTMLElement): void {
     bindNumber(`${orientation}-major-interval`, (value) => value > 0, (style, majorTickInterval) => axisWith(style, orientation, (axis) => ({ ...axis, majorTickInterval })));
     bindNumber(`${orientation}-minor-interval`, (value) => value > 0, (style, minorTickInterval) => axisWith(style, orientation, (axis) => ({ ...axis, minorTickInterval })));
   }
+
+  bindSelect("y-label-orientation", (style, labelOrientation) => axisWith(
+    style,
+    "y",
+    (axis) => ({ ...axis, labelOrientation: labelOrientation as AxisLabelOrientation }),
+  ));
 
   bindNumber("x-min", (value) => value < state.rendering.graphStyle.xMax, (style, xMin) => ({ ...style, xMin }));
   const xMaxInput = requiredElement<HTMLInputElement>(root, "x-max");

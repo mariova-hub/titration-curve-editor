@@ -83,7 +83,7 @@ describe("SVG typography", () => {
     expect(createExamGraphStyle(30).typography).toEqual(EXAM_TYPOGRAPHY);
     expect(createTeachingGraphStyle(30).typography).toEqual(TEACHING_TYPOGRAPHY);
     expect(EXAM_TYPOGRAPHY).toMatchObject({
-      tickLabelFontSizePt: 9,
+      tickLabelFontSizePt: 10.5,
       axisLabelFontSizePt: 10.5,
       titleFontSizePt: 13.5,
     });
@@ -92,6 +92,6 @@ describe("SVG typography", () => {
       axisLabelFontSizePt: 11,
       titleFontSizePt: 14,
     });
-    expect(TEACHING_TYPOGRAPHY.tickLabelFontSizePt).toBeGreaterThan(EXAM_TYPOGRAPHY.tickLabelFontSizePt);
+    expect(TEACHING_TYPOGRAPHY.axisLabelFontSizePt).toBeGreaterThan(EXAM_TYPOGRAPHY.axisLabelFontSizePt);
   });
 });

@@ -11,6 +11,14 @@ export const TICK_DIRECTIONS = ["outside", "inside", "both"] as const;
 
 export type TickDirection = (typeof TICK_DIRECTIONS)[number];
 
+export const AXIS_LABEL_ORIENTATIONS = [
+  "horizontal",
+  "counterclockwise",
+  "clockwise",
+] as const;
+
+export type AxisLabelOrientation = (typeof AXIS_LABEL_ORIENTATIONS)[number];
+
 export interface AxisLabelPosition {
   mode: "auto" | "custom";
   alongAxis: number;
@@ -38,6 +46,7 @@ export interface AxisStyle {
   tickLength: number;
   tickWidth: number;
   tickDirection: TickDirection;
+  labelOrientation: AxisLabelOrientation;
   labelPosition: AxisLabelPosition;
 }
 

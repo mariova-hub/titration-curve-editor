@@ -31,7 +31,7 @@ export const DEFAULT_TYPOGRAPHY: Readonly<TypographyStyle> = {
 };
 
 export const EXAM_TYPOGRAPHY: Readonly<TypographyStyle> = {
-  tickLabelFontSizePt: 9,
+  tickLabelFontSizePt: 10.5,
   tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   axisLabelFontSizePt: 10.5,
   axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
@@ -75,6 +75,7 @@ function axis(label: string, majorTickInterval: number | "auto"): AxisStyle {
     tickLength: 6,
     tickWidth: 1,
     tickDirection: "outside",
+    labelOrientation: "counterclockwise",
     labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
   };
 }
@@ -116,17 +117,19 @@ export function createDefaultGraphStyle(maxVolumeMl: number): GraphStyle {
   };
 }
 
-function blackAxis(source: AxisStyle): AxisStyle {
+function examAxis(source: AxisStyle): AxisStyle {
   return {
     ...source,
     visible: true,
     showLabel: true,
-    line: line(1, "solid", "#000000"),
+    line: line(2, "solid", "#000000"),
     showMajorTicks: true,
     showMinorTicks: false,
     showTickLabels: true,
     showZeroLabel: true,
+    tickWidth: 1.5,
     tickDirection: "outside",
+    labelOrientation: "counterclockwise",
     labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
   };
 }
@@ -136,9 +139,11 @@ export function applyExamPreset(style: GraphStyle): GraphStyle {
   return {
     ...source,
     presetOrigin: "exam",
+    width: 320,
+    height: 240,
     curve: line(2, "solid", "#000000"),
-    xAxis: blackAxis(source.xAxis),
-    yAxis: blackAxis(source.yAxis),
+    xAxis: examAxis(source.xAxis),
+    yAxis: examAxis(source.yAxis),
     horizontalGrid: grid(false),
     verticalGrid: grid(false),
     equivalenceGuides: {
@@ -167,6 +172,8 @@ export function applyTeachingPreset(style: GraphStyle): GraphStyle {
   return {
     ...source,
     presetOrigin: "teaching",
+    width: 720,
+    height: 480,
     curve: { ...source.curve },
     xAxis: {
       ...source.xAxis,
@@ -174,7 +181,10 @@ export function applyTeachingPreset(style: GraphStyle): GraphStyle {
       showLabel: true,
       showTickLabels: true,
       showZeroLabel: true,
+      line: line(1, "solid", "#000000"),
+      tickWidth: 1,
       tickDirection: "outside",
+      labelOrientation: "counterclockwise",
       labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
     },
     yAxis: {
@@ -183,7 +193,10 @@ export function applyTeachingPreset(style: GraphStyle): GraphStyle {
       showLabel: true,
       showTickLabels: true,
       showZeroLabel: true,
+      line: line(1, "solid", "#000000"),
+      tickWidth: 1,
       tickDirection: "outside",
+      labelOrientation: "counterclockwise",
       labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
     },
     horizontalGrid: grid(true),

@@ -48,9 +48,9 @@ describe("Phase 5 follow-up Japanese UI", () => {
 
 describe("aspect ratio state", () => {
   it.each([
-    ["3:2", 720, 480],
-    ["4:3", 720, 540],
-    ["1:1", 720, 720],
+    ["3:2", 320, 213.333],
+    ["4:3", 320, 240],
+    ["1:1", 320, 320],
   ] as const)("applies %s to a %d px width", (preset, width, expectedHeight) => {
     let state = selectAspectRatioPreset(createAppState(), preset);
     state = updateFigureWidth(state, width);
@@ -79,7 +79,7 @@ describe("aspect ratio state", () => {
     let state = selectAspectRatioPreset(createAppState(), "3:2");
     state = setAspectRatioLock(state, false);
     state = updateFigureWidth(state, 800);
-    expect(state.rendering.graphStyle).toMatchObject({ width: 800, height: 480 });
+    expect(state.rendering.graphStyle).toMatchObject({ width: 800, height: 213.333 });
     state = updateFigureHeight(state, 600);
     expect(state.rendering.graphStyle).toMatchObject({ width: 800, height: 600 });
   });
@@ -94,7 +94,7 @@ describe("aspect ratio state", () => {
 
   it("reflects a locked ratio in SVG width, height, and viewBox", () => {
     const state = selectAspectRatioPreset(createAppState(), "4:3");
-    expect(state.rendering.svgString).toContain('width="720" height="540" viewBox="0 0 720 540"');
+    expect(state.rendering.svgString).toContain('width="320" height="240" viewBox="0 0 320 240"');
   });
 });
 

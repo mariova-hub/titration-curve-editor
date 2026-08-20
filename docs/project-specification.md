@@ -366,6 +366,7 @@ interface AxisStyle {
   tickLengthPx: number;
   tickWidthPx: number;
   tickDirection: "outside" | "inside" | "both";
+  labelOrientation: "horizontal" | "counterclockwise" | "clockwise";
   labelPosition: {
     mode: "auto" | "custom";
     alongAxis: number;
@@ -374,7 +375,7 @@ interface AxisStyle {
 }
 ```
 
-X/Y軸は独立した`AxisStyle`を持つ。`visible`は軸全体、`labelVisible`は軸ラベル、`tickLabelsVisible`は目盛り数値を制御する。`showZeroLabel`は0の目盛り線を残したまま数値ラベルだけを制御する。`tickDirection`と軸ラベル位置もX/Yで独立する。`alongAxis`は0〜1、`offsetPx`は0以上のfinite値とする。軸範囲は表示上のclip領域であり、計算値を書き換えない。
+X/Y軸は独立した`AxisStyle`を持つ。`visible`は軸全体、`labelVisible`は軸ラベル、`tickLabelsVisible`は目盛り数値を制御する。`showZeroLabel`は0の目盛り線を残したまま数値ラベルだけを制御する。`tickDirection`と軸ラベル位置もX/Yで独立する。`labelOrientation`はY軸ラベルを水平0°・左-90°・右+90°の絶対角度で選択し、X軸描画には適用しない。`alongAxis`は0〜1、`offsetPx`は0以上のfinite値とする。軸範囲は表示上のclip領域であり、計算値を書き換えない。
 
 ### 11.10 GraphStyleモデル
 
@@ -411,7 +412,7 @@ interface GraphStyle {
 
 PresetはGraphStyleの初期値を一括適用する操作であり、モード固定ではない。適用後は各項目を個別変更できる。化学計算条件をGraphStyleへ格納してはならない。
 
-UIの標準表示言語は日本語とし、化学式、pH、SVG、PNG、mol/L、mL等の標準表記はそのまま用いる。図のwidth/heightは自由指定に加え、任意の横比率・縦比率による縦横比固定を提供する。縦横比、目盛り方向、軸ラベル位置、原点ラベル表示、typographyは図版styleであり、変更時に化学計算またはsamplingを再実行しない。目盛り数値、軸ラベル、タイトルのfont sizeはpt単位をfield名に明示し、font familyとともに各系統で独立して保持する。SVG textのfont-sizeはptで出力し、plot geometryでは`1 pt = 96 / 72 = 4 / 3` user unitとして一元換算する。Centuryは英数字を優先し、日本語用fallbackを含むstackとして提供する。SVGへフォントファイルは埋め込まない。
+UIの標準表示言語は日本語とし、pH、SVG、PNG、mol/L、mL等の標準表記はそのまま用いる。物質マスターのcanonical formulaはASCIIのまま維持し、UIの物質選択では表示専用utilityにより数字だけをUnicode下付きへ変換する。図のwidth/heightは自由指定に加え、任意の横比率・縦比率による縦横比固定を提供する。縦横比、目盛り方向、軸ラベル位置・回転方向、原点ラベル表示、typographyは図版styleであり、変更時に化学計算またはsamplingを再実行しない。目盛り数値、軸ラベル、タイトルのfont sizeはpt単位をfield名に明示し、font familyとともに各系統で独立して保持する。SVG textのfont-sizeはptで出力し、plot geometryでは`1 pt = 96 / 72 = 4 / 3` user unitとして一元換算する。Centuryは英数字を優先し、日本語用fallbackを含むstackとして提供する。SVGへフォントファイルは埋め込まない。
 
 ## 12. 複数当量点・特徴点対応
 
@@ -468,6 +469,8 @@ GraphStyle、座標変換、軸、少数目盛り、曲線、複数guideを含�
 
 PreviewとSVG Exportが共有する現在のSVG文字列をImageへ読み込み、一時Canvasで1倍・2倍・4倍にrasterizeしてPNG Blobとして保存する。PNG専用renderer、化学再計算、SVG再描画は禁止する。背景はSVG設定維持、白、透明を扱い、Object URLを成功・失敗双方で解放する。Canvasは一辺16,384pxかつ100MP以下に制限する。
 
+Phase 6受入れ後の図版品質調整として、Exam presetをWord試験問題向け320×240 px（4:3）、目盛り数値10.5 pt、軸ラベル10.5 pt、タイトル13.5 pt、曲線2 px、軸線2 px、目盛り線1.5 pxに固定する。PNGの既定2倍と選択可能な4倍を維持し、PNG固有の見た目補正は行わない。UI化学式の下付き表示とY軸ラベルの横書き・左90°・右90°の絶対向きをRendering/UI責務として扱う。
+
 ### Phase 7: 受入れ・文書化
 
 全自動テスト、代表図版の目視確認、アクセシビリティの基本確認を行う。scaffoldと起動方法が確定した時点でREADMEと`.gitignore`を作成する。
@@ -481,7 +484,7 @@ PreviewとSVG Exportが共有する現在のSVG文字列をImageへ読み込み�
 - sampling点が昇順・重複なしで、全当量点周辺に十分な点を持つ。
 - 計算点密度を変えても、軸目盛り設定が変わらない。
 - PreviewとSVG Exportが同じrenderer出力を使い、PNGはそのSVGから生成される。
-- Exam presetで白背景、黒実線、簡潔な目盛り、グリッドなし、タイトルなし、ガイドなし、注釈なしの図を生成できる。
+- Exam presetで320×240 px、白背景、黒実線、印刷で視認できる軸・目盛り、グリッドなし、タイトルなし、ガイドなし、注釈なしの図を生成できる。
 - SVG構造・表示制御・複数guide・Preview/Export一貫性テストが通る。
 - 設計上未対応の系は、理由付きエラーとなり、曲線を捏造しない。
 

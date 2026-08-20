@@ -95,6 +95,7 @@ npm run build
 - Default / Exam / Teaching GraphStyle factory・pure preset
 - Desktop向けControls / Previewの2カラムBrowser UIと狭幅時の1カラム表示
 - Substance Masterから生成するAnalyte / Titrant選択と濃度・体積入力
+- canonical formulaはASCIIのまま維持し、UIの物質選択では数字を下付き化した化学式を表示
 - raw入力、validated input、計算結果、GraphStyle、SVG文字列を分離したUI state
 - 入力validation、計算失敗のユーザー向け表示と、入力途中の直前Preview維持
 - 滴定条件変更時だけのcurve再計算と、style変更時のrenderer-only更新
@@ -111,6 +112,7 @@ npm run build
 - Typographyに応じて文字切れを防ぐSVG plot margin計算
 - X/Y独立の目盛り線方向（外向き・内向き・両方向）
 - X/Y軸ラベルの自動・指定位置、軸上位置、軸からの距離調整
+- Y軸ラベルの横書き／左90°／右90°の絶対向き切替
 - X/Y独立の原点`0`ラベル表示切替
 - ゴシック体・明朝体・MS ゴシック・MS Pゴシック・MS 明朝・MS P明朝・Century・sans-serif・serif・任意指定に対応するSVG `font-family`設定
 
@@ -126,3 +128,5 @@ Centuryは英数字を優先し、日本語グリフには`"Yu Mincho"`、`"MS M
 - user presetや入力条件の永続化
 
 PNGは現在のPCで利用可能なfontを使ってSVGをrasterizeします。font fileは埋め込まず、高倍率ほどファイルサイズと一時的なメモリ消費が増えます。CanvasはPNG生成中だけ使用し、Preview rendererには使用しません。
+
+Exam presetはMicrosoft Wordの試験問題へ貼り付けやすい320×240 px（4:3）を標準とし、目盛り数値・軸ラベルを各10.5 pt、タイトルを13.5 ptに設定します。曲線と軸線は2 px、目盛り線は1.5 pxとし、小型PNGの印刷でも軸が弱くならない設定です。PNGは2倍を標準推奨とし、4倍も高解像度用途として利用できます。SVGとPNGには同じGraphStyleが反映され、PNG専用の線幅・font補正は行いません。
