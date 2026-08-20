@@ -4,9 +4,7 @@
 
 ## 現在のPhase
 
-現在はPhase 4です。Phase 3までの滴定曲線データ生成に加え、軸・目盛り・グリッド・複数guide・markerを含む決定的なSVG rendererまでを実装しています。
-
-現時点の画面は開発基盤の動作確認用であり、滴定曲線を操作する完成UIではありません。
+現在はPhase 5です。化学的に計算した滴定曲線をブラウザで編集・Previewし、同じSVG文字列をファイルとして保存できる実用最小構成まで実装しています。
 
 ## 技術構成
 
@@ -14,7 +12,7 @@
 - HTML / CSS
 - Vite
 - Vitest
-- SVGを主出力とする設計（rendererは未実装）
+- SVGをsingle source of truthとする描画・Preview・Export
 
 React、Vue、Svelte等のUIフレームワーク、バックエンド、DB、クラウドサービスは使用していません。
 
@@ -66,7 +64,7 @@ npm run build
 - [酸塩基平衡・計算仕様](./docs/calculation-spec.md)
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
 
-## Phase 4までに実装済み
+## Phase 5までに実装済み
 
 - 多段階のprotonation speciesとdissociation stepを表すDomain Model
 - `complete`と`equilibrium`を区別する解離step
@@ -95,13 +93,22 @@ npm run build
 - 複数equivalence/characteristic guidesとcircle markers
 - white/transparent background、title/axis label、XML escaping
 - Default / Exam / Teaching GraphStyle factory・pure preset
+- Desktop向けControls / Previewの2カラムBrowser UIと狭幅時の1カラム表示
+- Substance Masterから生成するAnalyte / Titrant選択と濃度・体積入力
+- raw入力、validated input、計算結果、GraphStyle、SVG文字列を分離したUI state
+- 入力validation、計算失敗のユーザー向け表示と、入力途中の直前Preview維持
+- 滴定条件変更時だけのcurve再計算と、style変更時のrenderer-only更新
+- Exam / Teaching preset controlsと、適用後の個別style編集
+- curve、X/Y axes、range、major/minor ticks、grid、guide/marker、figure size、title/label controls
+- `renderTitrationSvg()`の出力を直接DOMへ表示するLive SVG Preview
+- Previewと同一のSVG文字列を`image/svg+xml;charset=utf-8`のBlobとして保存するSVG Export
 
 定数値は試験問題・教材との整合を優先します。酢酸`Ka = 2.69e-5`、アンモニア`Kb = 2.3e-5`、シュウ酸`Ka1 = 9.12e-2`、`Ka2 = 1.51e-4`を高校教材用プロファイルとして採用し、NH4+のKaは同じ25 ℃のKwから導出しています。
 
 ## 現在未実装の機能
 
-- browser Preview / 完成UI
-- PNG/SVG Export
-- 滴定条件・図版styleを編集するUI本体
+- PNG Export
+- Canvas / PDF出力
+- user presetや入力条件の永続化
 
-これらは設計文書に定めた後続Phaseで実装します。Phase 4のSVG文字列は将来のPreviewとSVG Exportが共有するsingle source of truthであり、現時点の画面は引き続き開発基盤の動作確認用です。
+PNG Exportは次Phaseの対象です。Phase 5ではCanvasを使用せず、SVG PreviewとSVG Exportだけを実装しています。
