@@ -12,7 +12,7 @@
 
 ## すぐ使う
 
-> **公開URL：GitHub Pages公開後に記載**
+https://mariova-hub.github.io/titration-curve-editor/
 
 公開後はURLを開くだけで利用でき、Node.js、npm、Git clone、buildは不要です。
 
