@@ -571,3 +571,14 @@ Canvasのpixel比較はブラウザ・font差の影響を受けるため、MVP�
 - viewBox、clipPath、path/polyline、line style、text、white/transparent backgroundを備えたSVGを生成する。
 - PreviewとSVG Exportが同じrendererを使用し、PNGが同じSVGから生成される。
 - 本書の構造・属性・visibility・複数guide・sampling integrity・consistency testsが通る。
+
+## 23. GitHub Pages / PWA配布
+
+- 正式配布の第一候補をGitHub Pages project siteとし、Vite baseは`/titration-curve-editor/`とする。GitHubユーザー名はsource、manifest、READMEへ推測で埋め込まない。
+- Web App Manifestは正式名`Titration Curve Editor`、短縮名`滴定曲線`、日本語説明、`standalone`表示、白背景、branding紺`#17365f`、言語`ja`、192/512 pxの`purpose: any` iconを持つ。
+- Service Workerはvite-plugin-pwaの`generateSW`でproduction build時だけ生成し、`autoUpdate`を使用する。custom update UIおよびcustom Service WorkerはMVP対象外とする。
+- precacheはindex、bundled JS/CSS、manifest、favicon、Apple Touch icon、192/512 px app iconを含む。外部API/CDN/web fontを新規利用しない。
+- Preview、SVG Export、PNG ExportはPWA専用経路を作らず、online時と同じstate・renderer・browser APIを使用する。
+- 初回online読込後にoffline reloadし、滴定条件変更、curve再計算、SVG生成・download、PNG生成・downloadが動作することをproduction previewで確認する。
+- development modeではService Workerを無効にし、production previewでmanifest、registration、Cache Storage、subpath解決を検証する。
+- 自動テストとbuild検証はbase、manifest、icon、workflow構造、生成Service Worker、precache一覧、root-only URL不在を確認する。

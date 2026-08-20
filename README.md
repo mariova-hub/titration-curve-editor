@@ -2,11 +2,29 @@
 
 <img src="public/app-icon-512.png" alt="Titration Curve Editor icon" width="128">
 
-高校化学の試験問題・授業教材・解説資料向けに、理論滴定曲線を編集可能なSVG/PNG図版として生成するローカルWebアプリです。
+高校化学の試験問題・授業教材・解説資料向けに、理論滴定曲線を編集可能なSVG/PNG図版として生成するWebアプリです。
+
+## すぐ使う
+
+一般利用者はNode.jsやnpmをインストールする必要はありません。GitHub Pagesの公開URLをブラウザで開くだけで利用できます。
+
+> 公開URLは、repository ownerがGitHub Pagesを有効化した後にここへ記載します。ユーザー名が未確定のため、存在しないURLは掲載していません。
+
+一度onlineで正常に読み込むと、対応ブラウザではアプリ本体がcacheされ、offlineでも滴定計算、図版編集、SVG/PNG出力の基本機能を利用できます。初回読み込みと更新取得にはネットワーク接続が必要です。
+
+### Windows
+
+ChromeやEdge等で公開URLを開いて利用します。対応ブラウザではブラウザの標準メニューやinstall表示からアプリとしてインストールできます。
+
+### Mac
+
+SafariやChrome等で公開URLを開いて利用します。対応するOS・ブラウザではDockへの追加またはアプリとしてのインストールが可能です。
+
+独自のinstall buttonは設けていません。利用中のブラウザが提供する標準機能を使用してください。
 
 ## 現在のPhase
 
-現在はv1.0.0 Release Candidateです。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をSVGまたはPNGとして保存できる実用構成まで実装しています。
+現在はv1.0.0 Release Candidateです。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をSVGまたはPNGとして保存できます。GitHub Pages配布とPWA install・offline precacheにも対応しています。
 
 ## 技術構成
 
@@ -14,11 +32,14 @@
 - HTML / CSS
 - Vite
 - Vitest
+- vite-plugin-pwa（generateSW）
 - SVGをsingle source of truthとする描画・プレビュー・出力
 
 React、Vue、Svelte等のUIフレームワーク、バックエンド、DB、クラウドサービスは使用していません。
 
-## セットアップ
+## 開発者向けセットアップ
+
+以下は開発・検証を行う場合だけ必要です。一般利用者にはNode.js/npmは不要です。
 
 Node.jsとnpmを用意し、リポジトリ直下で実行します。Node.jsはVite 7の要件に合わせて`^20.19.0 || >=22.12.0`を使用してください。つまり、Node.js 20系では20.19.0以上、またはNode.js 22.12.0以上が必要です。
 
@@ -33,6 +54,8 @@ npm run dev
 ```
 
 表示されたローカルURLをブラウザで開きます。
+
+GitHub Pages用のbase pathを設定しているため、開発サーバーが表示する`/titration-curve-editor/`付きURLを使用してください。development modeではService Workerを有効にせず、cacheによる開発時の混乱を避けています。
 
 ## Test
 
@@ -60,6 +83,24 @@ npm run build
 
 成果物は`dist/`へ生成されます。
 
+production buildとPWAをローカル確認する場合:
+
+```sh
+npm run preview
+```
+
+表示された`/titration-curve-editor/`付きURLを開きます。Service Worker、offline動作、manifestはproduction build/previewで確認してください。
+
+## GitHub Pagesの公開設定（repository owner向け）
+
+1. GitHub repositoryの **Settings** を開く。
+2. **Pages** を開く。
+3. **Build and deployment** の **Source** を **GitHub Actions** にする。
+4. `main`へpushするか、Actions画面から`Deploy to GitHub Pages`を手動実行する。
+5. deployment完了後、表示された公開URLをREADMEの「すぐ使う」へ記載する。
+
+workflowは`npm ci`、typecheck、全test、production buildを順に実行し、`dist/`だけをGitHub Pagesへdeployします。project siteのbase pathは`/titration-curve-editor/`です。
+
 ## 設計文書
 
 - [プロジェクト仕様](./docs/project-specification.md)
@@ -67,7 +108,7 @@ npm run build
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
 - [アイコンアセット](./docs/icon-assets.md)
 
-## Phase 6までに実装済み
+## Phase 8までに実装済み
 
 - 多段階のprotonation speciesとdissociation stepを表すDomain Model
 - `complete`と`equilibrium`を区別する解離step
@@ -119,6 +160,10 @@ npm run build
 - Y軸ラベルの横書き／左90°／右90°の絶対向き切替
 - X/Y独立の原点`0`ラベル表示切替
 - ゴシック体・明朝体・MS ゴシック・MS Pゴシック・MS 明朝・MS P明朝・Century・sans-serif・serif・任意指定に対応するSVG `font-family`設定
+- GitHub Pages project site用の`/titration-curve-editor/` base path
+- 192 px / 512 px iconを持つWeb App Manifestとstandalone PWA install
+- `generateSW`と`autoUpdate`によるproduction assetのoffline precache
+- `main`へのpushまたは手動実行で`dist/`を公開するGitHub Pages Actions workflow
 
 Centuryは英数字を優先し、日本語グリフには`"Yu Mincho"`、`"MS Mincho"`、`serif`の順でfallbackするstackを使用します。SVGへフォントファイル自体は埋め込みません。別のPCでSVGを開いた際に指定フォントが存在しない場合は、`font-family`に指定したfallbackまたは閲覧環境の代替フォントで表示されます。
 
@@ -132,5 +177,7 @@ Centuryは英数字を優先し、日本語グリフには`"Yu Mincho"`、`"MS M
 - user presetや入力条件の永続化
 
 PNGは現在のPCで利用可能なfontを使ってSVGをrasterizeします。font fileは埋め込まず、高倍率ほどファイルサイズと一時的なメモリ消費が増えます。CanvasはPNG生成中だけ使用し、Preview rendererには使用しません。
+
+PWAは外部API、CDN、web fontを追加せず、同じbrowser内計算・SVG renderer・PNG変換を使用します。Service Workerはproduction buildで生成され、development modeでは無効です。自動更新は次回起動時等に新しいprecacheへ切り替わる構成ですが、初回訪問時はonline接続が必要です。
 
 Exam presetはMicrosoft Wordの試験問題へ貼り付けやすい320×240 px（4:3）を標準とし、目盛り数値・軸ラベルを各10.5 pt、タイトルを13.5 ptに設定します。曲線と軸線は2 px、目盛り線は1.5 pxとし、小型PNGの印刷でも軸が弱くならない設定です。PNGは2倍を標準推奨とし、4倍も高解像度用途として利用できます。SVGとPNGには同じGraphStyleが反映され、PNG専用の線幅・font補正は行いません。

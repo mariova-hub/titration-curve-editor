@@ -102,8 +102,9 @@ H3PO4、H2C2O4、H2CO3は段階平衡として扱う。H2SO4は第1段階と第2
 - 描画: SVG DOMまたはシリアライズ可能なSVG描画モデル
 - Build/dev server: Viteを想定
 - Test: Vitestを想定
-- Runtime: ローカルブラウザのみ
+- Runtime: browser内で完結。ローカル開発またはGitHub Pagesから利用
 - PNG: SVGをCanvas等へ変換して生成。独立PNG rendererは禁止
+- Distribution: GitHub Pages project siteと、generateSW方式のPWA offline precache
 
 ライブラリ選定は実装Phaseで最小限に行う。依存追加だけで設計上の責務境界を崩してはならない。
 
@@ -477,6 +478,10 @@ Phase 6受入れ後の図版品質調整として、Exam presetをWord試験問�
 
 全自動テスト、代表図版の目視確認、アクセシビリティの基本確認を行う。scaffoldと起動方法が確定した時点でREADMEと`.gitignore`を作成する。
 
+### Phase 8: GitHub Pages / PWA配布
+
+Viteのbaseを`/titration-curve-editor/`へ固定し、GitHub Pages project siteへ`dist/`をdeployする公式Actions workflowを提供する。PWAは`generateSW`と`autoUpdate`を使用し、manifest、HTML、JS、CSS、favicon、192/512 px app iconをprecacheする。development modeではService Workerを無効にし、production build/previewでinstallabilityとoffline動作を検証する。PWAは既存Calculation/Rendering/Exportを再実装せず、同じ静的Webアプリを配信する。
+
 ## 16. MVP完成条件
 
 - 指定12物質が出典付き物質マスターに登録され、シュウ酸が必須対象として機能する。
@@ -486,6 +491,7 @@ Phase 6受入れ後の図版品質調整として、Exam presetをWord試験問�
 - sampling点が昇順・重複なしで、全当量点周辺に十分な点を持つ。
 - 計算点密度を変えても、軸目盛り設定が変わらない。
 - PreviewとSVG Exportが同じrenderer出力を使い、PNGはそのSVGから生成される。
+- GitHub Pagesのproject site subpathでJS/CSS/favicon/manifest/Service Workerが解決し、初回online読込後はofflineで基本計算とSVG/PNG出力を利用できる。
 - Exam presetで320×240 px、白背景、黒実線、印刷で視認できる軸・目盛り、グリッドなし、タイトルなし、ガイドなし、注釈なしの図を生成できる。
 - SVG構造・表示制御・複数guide・Preview/Export一貫性テストが通る。
 - 設計上未対応の系は、理由付きエラーとなり、曲線を捏造しない。

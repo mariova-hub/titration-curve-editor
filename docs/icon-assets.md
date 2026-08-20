@@ -11,26 +11,27 @@ assets/
 
 public/
 ├─ app-icon-512.png      # 512 × 512 px
+├─ app-icon-192.png      # 192 × 192 pxのPWA用派生画像
 ├─ apple-touch-icon.png  # 180 × 180 px
 ├─ favicon-32x32.png     # 32 × 32 pxの簡略版
 ├─ favicon-16x16.png     # 16 × 16 pxの簡略版
 └─ favicon.ico           # 16 / 32 / 48 pxフレーム
 ```
 
-`assets/` は編集・再生成用の原版を保持します。`public/` はViteの静的アセットとして、そのまま配信およびproduction buildへコピーされます。
+`assets/` は編集・再生成用の原版を保持します。`public/` はViteの静的アセットとして、そのまま配信およびproduction buildへコピーされます。192 px版は512 px版を図柄変更なしで縮小したPWA manifest用画像です。
 
 ## HTMLからの参照
 
 `index.html` では次の参照を使用します。
 
 ```html
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="%BASE_URL%favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="%BASE_URL%favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="%BASE_URL%favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%apple-touch-icon.png">
 ```
 
-Viteアプリをドメインルート以外のサブパスへ配置する場合は、Viteの`base`設定と参照パスを合わせます。
+`%BASE_URL%`はViteの`base`設定へ置換されます。GitHub Pagesでは`/titration-curve-editor/`となり、project site配下でもfaviconがrootへ逃げません。
 
 ## 図柄と配色
 
