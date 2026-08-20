@@ -220,3 +220,7 @@ GitHub Pages用のbase pathは`/titration-curve-editor/`です。開発・previe
 - [酸塩基平衡・計算仕様](./docs/calculation-spec.md)
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
 - [アイコンアセット](./docs/icon-assets.md)
+
+## ライセンス
+
+本プロジェクトは[MIT License](./LICENSE)のもとで公開されています。
