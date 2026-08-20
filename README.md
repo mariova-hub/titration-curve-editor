@@ -4,7 +4,7 @@
 
 ## 現在のPhase
 
-現在はPhase 1です。Project Scaffold、Domain Model、初期Substance Masterの構造、基本Validation、テスト基盤までを実装しています。
+現在はPhase 2です。Phase 1の開発基盤とDomain Modelに加え、25 ℃の正式物質マスター、汎用酸塩基平衡計算、当量点・半当量点計算、回帰テストまでを実装しています。
 
 現時点の画面は開発基盤の動作確認用であり、滴定曲線を操作する完成UIではありません。
 
@@ -66,27 +66,31 @@ npm run build
 - [酸塩基平衡・計算仕様](./docs/calculation-spec.md)
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
 
-## Phase 1で実装済み
+## Phase 2までに実装済み
 
 - 多段階のprotonation speciesとdissociation stepを表すDomain Model
 - `complete`と`equilibrium`を区別する解離step
-- 未確認Kaを数値なしの`pending`状態で保持する構造
+- 『化学便覧 基礎編 改訂6版』を基礎とする高校教材用Ka/Kb（25 ℃）と出典・注記を保持する物質マスター
 - Ca(OH)2 / Ba(OH)2の式量あたりOH⁻数を保持する構造
 - 12物質を登録した初期Substance Master構造
 - 複数当量点・複数特徴点を保持する結果モデル
 - Graph Style Model
 - 滴定入力の基本Validation
+- 任意段数のprotonation species distribution
+- 物質収支・固定イオンを含む電荷収支
+- pH空間相当の`log10([H+])`における決定的bisection solver
+- 任意の滴下体積を解く`calculatePHAtVolume`
+- 複数の化学量論当量点と半当量点の計算
+- HCl、CH3COOH、NH3、H2C2O4、H2SO4、H3PO4、Ca(OH)2を含む回帰fixture
+- 酸→塩基・塩基→酸を同一solverで扱う逆滴定テスト
+
+定数値は試験問題・教材との整合を優先します。酢酸`Ka = 2.69e-5`、アンモニア`Kb = 2.3e-5`、シュウ酸`Ka1 = 9.12e-2`、`Ka2 = 1.51e-4`を高校教材用プロファイルとして採用し、NH4+のKaは同じ25 ℃のKwから導出しています。
 
 ## 現在未実装の機能
 
-- pH計算engine
-- 物質収支・電荷収支
-- root finding
-- 当量点・半当量点の計算
 - adaptive sampling
 - SVG rendererとPreview
 - PNG/SVG Export
 - 滴定条件・図版styleを編集するUI本体
-- 正式なKa/Kb値と出典
 
-これらは設計文書に定めた後続Phaseで実装します。
+これらは設計文書に定めた後続Phaseで実装します。Phase 2の計算APIはUIやrendererから独立しており、現時点の画面は引き続き開発基盤の動作確認用です。

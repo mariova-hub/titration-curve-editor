@@ -11,13 +11,21 @@ export interface PendingKa {
   status: "pending";
 }
 
+export interface ChemicalConstantSource {
+  id: string;
+  title: string;
+  url: string;
+  citation: string;
+}
+
 export interface ConfirmedKa {
   status: "confirmed";
   kind: "Ka";
   value: number;
   temperatureC: 25;
-  sourceId: string;
+  source: ChemicalConstantSource;
   reviewedAt: string;
+  note?: string;
 }
 
 export type KaReference = PendingKa | ConfirmedKa;
@@ -56,6 +64,7 @@ export type BaseFamily = AcidBaseFamily;
 export interface CompleteIon {
   species: ChemicalSpecies;
   coefficientPerFormulaUnit: number;
+  kind: "fixed" | "hydroxide";
 }
 
 export interface ProtonationFamilyModel {

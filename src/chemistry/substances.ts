@@ -3,10 +3,12 @@ import type {
   ChemicalSpecies,
   CompleteDissociationStep,
   CompleteIon,
+  ConfirmedKa,
   EquilibriumDissociationStep,
   StrongHydroxideModel,
   Substance,
 } from "../domain/chemistry";
+import { ACID_DISSOCIATION_CONSTANTS } from "./constants";
 
 function createSpecies(
   id: string,
@@ -32,11 +34,12 @@ function createCompleteStep(
   };
 }
 
-function createPendingEquilibriumStep(
+function createEquilibriumStep(
   id: string,
   order: number,
   acidSpeciesId: string,
   conjugateBaseSpeciesId: string,
+  ka: ConfirmedKa,
 ): EquilibriumDissociationStep {
   return {
     id,
@@ -44,7 +47,7 @@ function createPendingEquilibriumStep(
     acidSpeciesId,
     conjugateBaseSpeciesId,
     mode: "equilibrium",
-    ka: { status: "pending" },
+    ka,
   };
 }
 
@@ -58,7 +61,11 @@ function createProtonationFamilySubstance(
   return {
     ...substance,
     acidBaseModel: { kind: "protonation-family", family },
-    provenance: { status: "pending" },
+    provenance: {
+      status: "reviewed",
+      sourceId: "phase-2-reviewed-substance-master",
+      reviewedAt: "2026-08-20",
+    },
   };
 }
 
@@ -78,7 +85,11 @@ function createStrongHydroxideSubstance(
   return {
     ...substance,
     acidBaseModel,
-    provenance: { status: "pending" },
+    provenance: {
+      status: "reviewed",
+      sourceId: "phase-2-reviewed-substance-master",
+      reviewedAt: "2026-08-20",
+    },
   };
 }
 
@@ -135,11 +146,12 @@ const h2so4 = createProtonationFamilySubstance({
         "h2so4.h2so4",
         "h2so4.hso4",
       ),
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h2so4.step2",
         2,
         "h2so4.hso4",
         "h2so4.so4",
+        ACID_DISSOCIATION_CONSTANTS.hso4,
       ),
     ],
   },
@@ -157,11 +169,12 @@ const aceticAcid = createProtonationFamilySubstance({
       createSpecies("ch3cooh.ch3coo", "CH3COO-", -1, 0),
     ],
     dissociationSteps: [
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "ch3cooh.step1",
         1,
         "ch3cooh.ch3cooh",
         "ch3cooh.ch3coo",
+        ACID_DISSOCIATION_CONSTANTS.aceticAcid,
       ),
     ],
   },
@@ -180,17 +193,19 @@ const oxalicAcid = createProtonationFamilySubstance({
       createSpecies("h2c2o4.c2o4", "C2O4^2-", -2, 0),
     ],
     dissociationSteps: [
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h2c2o4.step1",
         1,
         "h2c2o4.h2c2o4",
         "h2c2o4.hc2o4",
+        ACID_DISSOCIATION_CONSTANTS.oxalicAcid1,
       ),
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h2c2o4.step2",
         2,
         "h2c2o4.hc2o4",
         "h2c2o4.c2o4",
+        ACID_DISSOCIATION_CONSTANTS.oxalicAcid2,
       ),
     ],
   },
@@ -209,17 +224,19 @@ const carbonicAcid = createProtonationFamilySubstance({
       createSpecies("h2co3.co3", "CO3^2-", -2, 0),
     ],
     dissociationSteps: [
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h2co3.step1",
         1,
         "h2co3.h2co3",
         "h2co3.hco3",
+        ACID_DISSOCIATION_CONSTANTS.carbonicAcid1,
       ),
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h2co3.step2",
         2,
         "h2co3.hco3",
         "h2co3.co3",
+        ACID_DISSOCIATION_CONSTANTS.carbonicAcid2,
       ),
     ],
   },
@@ -239,23 +256,26 @@ const phosphoricAcid = createProtonationFamilySubstance({
       createSpecies("h3po4.po4", "PO4^3-", -3, 0),
     ],
     dissociationSteps: [
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h3po4.step1",
         1,
         "h3po4.h3po4",
         "h3po4.h2po4",
+        ACID_DISSOCIATION_CONSTANTS.phosphoricAcid1,
       ),
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h3po4.step2",
         2,
         "h3po4.h2po4",
         "h3po4.hpo4",
+        ACID_DISSOCIATION_CONSTANTS.phosphoricAcid2,
       ),
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "h3po4.step3",
         3,
         "h3po4.hpo4",
         "h3po4.po4",
+        ACID_DISSOCIATION_CONSTANTS.phosphoricAcid3,
       ),
     ],
   },
@@ -276,10 +296,12 @@ function createHydroxideIons(
         0,
       ),
       coefficientPerFormulaUnit: 1,
+      kind: "fixed",
     },
     {
       species: createSpecies(`${substanceId}.oh`, "OH-", -1, 0),
       coefficientPerFormulaUnit: hydroxideStoichiometry,
+      kind: "hydroxide",
     },
   ];
 }
@@ -332,11 +354,12 @@ const ammonia = createProtonationFamilySubstance({
       createSpecies("nh3.nh3", "NH3", 0, 0),
     ],
     dissociationSteps: [
-      createPendingEquilibriumStep(
+      createEquilibriumStep(
         "nh3.step1",
         1,
         "nh3.nh4",
         "nh3.nh3",
+        ACID_DISSOCIATION_CONSTANTS.ammonium,
       ),
     ],
   },

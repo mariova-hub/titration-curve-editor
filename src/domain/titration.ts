@@ -11,6 +11,9 @@ export interface EquivalencePoint {
   order: number;
   volumeMl: number;
   pH?: number;
+  classification?: "theoretical";
+  stoichiometricEquivalent?: number;
+  participatingStepIds?: string[];
 }
 
 export type CharacteristicPointType =
@@ -24,6 +27,7 @@ export interface CharacteristicPoint {
   order: number;
   volumeMl: number;
   pH?: number;
+  relatedEquivalencePointIds?: string[];
 }
 
 export interface CurvePoint {

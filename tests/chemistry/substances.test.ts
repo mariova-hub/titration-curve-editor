@@ -65,7 +65,7 @@ describe("substance master", () => {
     expect(family.dissociationSteps).toHaveLength(3);
   });
 
-  it("represents oxalic acid with three species and two pending equilibrium steps", () => {
+  it("represents oxalic acid with three species and two confirmed equilibrium steps", () => {
     const family = getFamily("h2c2o4");
 
     expect(family.species.map(({ formula }) => formula)).toEqual([
@@ -82,7 +82,7 @@ describe("substance master", () => {
     );
     expect(
       family.dissociationSteps.every(
-        (step) => step.mode === "equilibrium" && step.ka.status === "pending",
+        (step) => step.mode === "equilibrium" && step.ka.status === "confirmed",
       ),
     ).toBe(true);
   });
@@ -119,7 +119,7 @@ describe("substance master", () => {
     );
   });
 
-  it("does not invent numeric Ka values for pending constants", () => {
+  it("stores reviewed 25 degree constants for every equilibrium step", () => {
     const equilibriumSteps = SUBSTANCES.flatMap((substance) =>
       substance.acidBaseModel.kind === "protonation-family"
         ? substance.acidBaseModel.family.dissociationSteps.filter(
@@ -129,6 +129,14 @@ describe("substance master", () => {
     );
 
     expect(equilibriumSteps.length).toBeGreaterThan(0);
-    expect(equilibriumSteps.every((step) => step.ka.status === "pending")).toBe(true);
+    expect(
+      equilibriumSteps.every(
+        (step) =>
+          step.ka.status === "confirmed" &&
+          step.ka.temperatureC === 25 &&
+          step.ka.value > 0 &&
+          step.ka.source.url.length > 0,
+      ),
+    ).toBe(true);
   });
 });
