@@ -4,7 +4,26 @@ import type {
   GridStyle,
   LineStyle,
   MarkerStyle,
+  TypographyStyle,
 } from "../domain/graph-style";
+
+export const DEFAULT_TYPOGRAPHY: Readonly<TypographyStyle> = {
+  tickLabelFontSize: 12,
+  axisLabelFontSize: 14,
+  titleFontSize: 18,
+};
+
+export const EXAM_TYPOGRAPHY: Readonly<TypographyStyle> = {
+  tickLabelFontSize: 12,
+  axisLabelFontSize: 14,
+  titleFontSize: 18,
+};
+
+export const TEACHING_TYPOGRAPHY: Readonly<TypographyStyle> = {
+  tickLabelFontSize: 13,
+  axisLabelFontSize: 15,
+  titleFontSize: 19,
+};
 
 function line(
   width: number,
@@ -65,6 +84,7 @@ export function createDefaultGraphStyle(maxVolumeMl: number): GraphStyle {
       marker: marker(false, "#000000", 2.5),
     },
     title: { visible: false, text: "滴定曲線" },
+    typography: { ...DEFAULT_TYPOGRAPHY },
     background: "white",
     annotationsVisible: false,
   };
@@ -107,6 +127,7 @@ export function applyExamPreset(style: GraphStyle): GraphStyle {
       marker: { ...source.characteristicPoints.marker, visible: false },
     },
     title: { ...source.title, visible: false },
+    typography: { ...EXAM_TYPOGRAPHY },
     background: "white",
     annotationsVisible: false,
   };
@@ -136,6 +157,7 @@ export function applyTeachingPreset(style: GraphStyle): GraphStyle {
       line: line(0.8, "dotted", "#777777"),
       marker: marker(true, "#222222", 2.5),
     },
+    typography: { ...TEACHING_TYPOGRAPHY },
     annotationsVisible: false,
   };
 }

@@ -21,19 +21,23 @@ export interface CoordinateTransform {
 }
 
 export function calculatePlotArea(style: GraphStyle): PlotArea {
-  const topMargin = style.title.visible ? 52 : 20;
+  const topMargin = style.title.visible
+    ? Math.max(52, style.typography.titleFontSize + 28)
+    : 20;
   const rightMargin = 20;
   const bottomMargin = style.xAxis.visible
     ? 20 +
       (style.xAxis.showMajorTicks ? style.xAxis.tickLength : 0) +
-      (style.xAxis.showTickLabels ? 22 : 0) +
-      (style.xAxis.showLabel ? 30 : 0)
+      (style.xAxis.showTickLabels ? style.typography.tickLabelFontSize + 10 : 0) +
+      (style.xAxis.showLabel ? style.typography.axisLabelFontSize + 16 : 0)
     : 16;
   const leftMargin = style.yAxis.visible
     ? 20 +
       (style.yAxis.showMajorTicks ? style.yAxis.tickLength : 0) +
-      (style.yAxis.showTickLabels ? 38 : 0) +
-      (style.yAxis.showLabel ? 30 : 0)
+      (style.yAxis.showTickLabels
+        ? Math.max(38, style.typography.tickLabelFontSize * 3)
+        : 0) +
+      (style.yAxis.showLabel ? style.typography.axisLabelFontSize + 16 : 0)
     : 16;
   const left = leftMargin;
   const top = topMargin;

@@ -27,6 +27,7 @@
 ```
 
 - Controlsはカテゴリ単位で明確に分ける。
+- UIの標準表示言語は日本語とする。内部identifierと、化学式、pH、SVG、PNG、mol/L、mL等の標準表記はこの限りではない。
 - Previewは設定変更後の同一SVG描画結果を表示する。
 - 狭い画面では上下配置へ切り替えてよいが、入力項目・意味・描画結果を変更しない。
 - MVPはローカルブラウザだけで動作し、ログインやクラウド保存を要求しない。
@@ -53,7 +54,7 @@ interface AppState {
 - `TitrationResult`は計算結果であり、style変更で再計算しない。
 - `GraphStyle`は図版設定であり、化学入力・計算点を含めない。
 - 化学入力またはsampling設定の変更時だけ計算を再実行する。
-- axis、tick、guide、色、線幅、figure sizeの変更ではrendererだけを再実行する。
+- axis、tick、guide、色、線幅、figure size、縦横比、typographyの変更ではrendererだけを再実行する。
 - 入力エラー・未対応系・収束失敗時は旧曲線を新しい入力の結果として表示せず、明確なエラー状態を示してExportを無効化する。
 
 ## 4. Controlsカテゴリ
@@ -222,11 +223,18 @@ Preset適用後の個別変更は`presetOrigin`を履歴情報として残して
 ## 10. Figure Size
 
 - widthとheightを正のfinite px値で指定する。
+- 「縦横比を固定」のON/OFF、横比率、縦比率をUI状態として持つ。比率は整数に限定せず、各値を正のfinite値とする。
+- 縦横比presetは少なくとも自由、1:1、4:3、3:2、16:9を持つ。preset適用後も任意比率へ変更できる。
+- 固定ONではwidth変更に追従してheightを、height変更に追従してwidthを更新する。固定OFFではwidthとheightを独立に変更する。循環更新を起こさない。
 - SVG rootは指定width/heightとviewBoxを持つ。
-- plot marginはtitle、axis label、tick labelが切れない値を描画モデルで決定する。
+- plot marginはtitle、axis label、tick labelと各font sizeに応じ、文字が切れない値を描画モデルで決定する。
 - 極端に小さいfigure sizeでplot areaが正にならない場合はvalidation errorとする。
 - Preview表示のCSS縮小はSVG内部座標、線幅、Export寸法を変更しない。
 - backgroundは`white`または`transparent`。Examはwhite。
+
+### 10.1 Typography
+
+`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeを独立して保持する。各値は正のfinite px値とし、renderer内へ固定font sizeを残さない。Exam/Teaching presetはtypography初期値を明示し、適用後の個別変更を許可する。font size変更はcurve point、sampling、化学計算結果を変更しない。
 
 ## 11. Rendering pipeline
 
@@ -428,6 +436,15 @@ Vitestと、必要最小限のDOM環境を想定する。外観snapshotだけに
 - transparentで仕様どおり背景がない
 - viewBoxと出力寸法がFigure Sizeを反映する
 - PreviewのCSS sizeがSVG内部寸法を変更しない
+- 任意比率、比率preset、固定ON/OFFがSVG rootのwidth/height/viewBoxへ反映される
+
+### 16.10 typography / 日本語UI
+
+- tick label、axis label、titleのfont sizeが個別にSVG textへ反映される
+- font size増加時に必要marginが増え、plotまたはSVG外で文字が切れない
+- 非finiteまたは0以下のfont sizeをrendererがrejectする
+- typographyと縦横比の変更でcurve pointsが変わらず、Calculationを再実行しない
+- 主要Controls、preset、図のサイズ、出力操作が日本語で表示される
 
 ## 17. Sampling/data integrity tests
 

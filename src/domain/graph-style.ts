@@ -59,6 +59,12 @@ export interface TitleStyle {
   text: string;
 }
 
+export interface TypographyStyle {
+  tickLabelFontSize: number;
+  axisLabelFontSize: number;
+  titleFontSize: number;
+}
+
 export type GraphBackground = "white" | "transparent";
 
 export interface GraphStyle {
@@ -77,6 +83,7 @@ export interface GraphStyle {
   equivalenceGuides: EquivalenceGuideStyle;
   characteristicPoints: CharacteristicPointStyle;
   title: TitleStyle;
+  typography: TypographyStyle;
   background: GraphBackground;
   annotationsVisible: boolean;
 }

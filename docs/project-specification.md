@@ -380,6 +380,11 @@ interface GraphStyle {
     background: "transparent" | "white";
   };
   title: { visible: boolean; text: string };
+  typography: {
+    tickLabelFontSize: number;
+    axisLabelFontSize: number;
+    titleFontSize: number;
+  };
   curve: LineStyle;
   xAxis: AxisStyle;
   yAxis: AxisStyle;
@@ -395,6 +400,8 @@ interface GraphStyle {
 ```
 
 PresetはGraphStyleの初期値を一括適用する操作であり、モード固定ではない。適用後は各項目を個別変更できる。化学計算条件をGraphStyleへ格納してはならない。
+
+UIの標準表示言語は日本語とし、化学式、pH、SVG、PNG、mol/L、mL等の標準表記はそのまま用いる。図のwidth/heightは自由指定に加え、任意の横比率・縦比率による縦横比固定を提供する。縦横比とtypographyは図版styleであり、変更時に化学計算またはsamplingを再実行しない。目盛り数値、軸ラベル、タイトルのfont sizeは独立した正のfinite値として保持する。
 
 ## 12. 複数当量点・特徴点対応
 

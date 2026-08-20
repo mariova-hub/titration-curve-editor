@@ -89,6 +89,11 @@ const graphStyle: GraphStyle = {
     },
     marker: { visible: true, color: "#000000", radius: 3 },
   },
+  typography: {
+    tickLabelFontSize: 12,
+    axisLabelFontSize: 14,
+    titleFontSize: 18,
+  },
   title: { visible: false, text: "滴定曲線" },
   background: "white",
   annotationsVisible: false,

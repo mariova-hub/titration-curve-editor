@@ -4,7 +4,7 @@
 
 ## 現在のPhase
 
-現在はPhase 5です。化学的に計算した滴定曲線をブラウザで編集・Previewし、同じSVG文字列をファイルとして保存できる実用最小構成まで実装しています。
+現在はPhase 5 Follow-upです。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をファイルとして保存できる実用最小構成まで実装しています。
 
 ## 技術構成
 
@@ -12,7 +12,7 @@
 - HTML / CSS
 - Vite
 - Vitest
-- SVGをsingle source of truthとする描画・Preview・Export
+- SVGをsingle source of truthとする描画・プレビュー・出力
 
 React、Vue、Svelte等のUIフレームワーク、バックエンド、DB、クラウドサービスは使用していません。
 
@@ -102,6 +102,10 @@ npm run build
 - curve、X/Y axes、range、major/minor ticks、grid、guide/marker、figure size、title/label controls
 - `renderTitrationSvg()`の出力を直接DOMへ表示するLive SVG Preview
 - Previewと同一のSVG文字列を`image/svg+xml;charset=utf-8`のBlobとして保存するSVG Export
+- ユーザー向け表示を日本語へ統一したBrowser UI
+- 自由指定、1:1、4:3、3:2、16:9、任意比率に対応する縦横比設定と固定ON/OFF
+- 目盛り数値、軸ラベル、タイトルを独立調整するTypography controls
+- Typographyに応じて文字切れを防ぐSVG plot margin計算
 
 定数値は試験問題・教材との整合を優先します。酢酸`Ka = 2.69e-5`、アンモニア`Kb = 2.3e-5`、シュウ酸`Ka1 = 9.12e-2`、`Ka2 = 1.51e-4`を高校教材用プロファイルとして採用し、NH4+のKaは同じ25 ℃のKwから導出しています。
 
@@ -111,4 +115,4 @@ npm run build
 - Canvas / PDF出力
 - user presetや入力条件の永続化
 
-PNG Exportは次Phaseの対象です。Phase 5ではCanvasを使用せず、SVG PreviewとSVG Exportだけを実装しています。
+PNG Exportは次Phaseの対象です。Phase 5 Follow-upではCanvasを使用せず、SVGプレビューとSVG書き出しだけを実装しています。

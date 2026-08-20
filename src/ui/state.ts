@@ -44,6 +44,17 @@ export interface RenderingState {
   svgString: string | null;
   error: UiError | null;
   xRangeMode: "auto" | "manual";
+  aspectRatio: AspectRatioState;
+}
+
+export type AspectRatioPreset = "free" | "1:1" | "4:3" | "3:2" | "16:9" | "custom";
+
+export interface AspectRatioState {
+  locked: boolean;
+  widthRatioInput: string;
+  heightRatioInput: string;
+  preset: AspectRatioPreset;
+  error: string | null;
 }
 
 export interface AppState {
@@ -67,6 +78,22 @@ export const DEFAULT_TITRATION_DRAFT: Readonly<TitrationDraft> = {
 export const DEFAULT_APP_DEPENDENCIES: AppDependencies = {
   calculateCurve: calculateTitrationCurve,
   renderSvg: renderTitrationSvg,
+};
+
+export const ASPECT_RATIO_PRESETS: Readonly<Record<Exclude<AspectRatioPreset, "custom">, readonly [number, number] | null>> = {
+  free: null,
+  "1:1": [1, 1],
+  "4:3": [4, 3],
+  "3:2": [3, 2],
+  "16:9": [16, 9],
+};
+
+const DEFAULT_ASPECT_RATIO: Readonly<AspectRatioState> = {
+  locked: false,
+  widthRatioInput: "3",
+  heightRatioInput: "2",
+  preset: "free",
+  error: null,
 };
 
 type DraftParseResult =
@@ -146,7 +173,7 @@ function renderingError(): UiError {
   return {
     code: "rendering-failure",
     field: "rendering",
-    message: "現在の図版設定ではPreviewを描画できません。軸範囲や図の大きさを確認してください。",
+    message: "現在の図版設定ではプレビューを描画できません。軸範囲や図の大きさを確認してください。",
   };
 }
 
@@ -185,6 +212,7 @@ export function createAppState(
         svgString: null,
         error: null,
         xRangeMode: "auto",
+        aspectRatio: { ...DEFAULT_ASPECT_RATIO },
       },
     };
   }
@@ -207,6 +235,7 @@ export function createAppState(
         svgString: rendered.svgString,
         error: rendered.error,
         xRangeMode: "auto",
+        aspectRatio: { ...DEFAULT_ASPECT_RATIO },
       },
     };
   } catch (error) {
@@ -224,6 +253,7 @@ export function createAppState(
         svgString: null,
         error: null,
         xRangeMode: "auto",
+        aspectRatio: { ...DEFAULT_ASPECT_RATIO },
       },
     };
   }
@@ -371,6 +401,183 @@ export function useAutomaticXRange(
     rendering: { ...state.rendering, xRangeMode: "auto" },
   };
   return calculateForDraft(automaticState, state.chemical.draft, dependencies);
+}
+
+function parseAspectRatio(aspectRatio: AspectRatioState): readonly [number, number] | null {
+  const widthRatio = Number(aspectRatio.widthRatioInput.trim());
+  const heightRatio = Number(aspectRatio.heightRatioInput.trim());
+  if (
+    aspectRatio.widthRatioInput.trim().length === 0 ||
+    aspectRatio.heightRatioInput.trim().length === 0 ||
+    !Number.isFinite(widthRatio) ||
+    !Number.isFinite(heightRatio) ||
+    widthRatio <= 0 ||
+    heightRatio <= 0
+  ) {
+    return null;
+  }
+  return [widthRatio, heightRatio];
+}
+
+function aspectRatioError(): string {
+  return "横比率と縦比率には0より大きい有限の数値を入力してください。";
+}
+
+function roundFigureDimension(value: number): number {
+  return Math.round(value * 1_000) / 1_000;
+}
+
+function updateFigureStyle(
+  state: AppState,
+  width: number,
+  height: number,
+  aspectRatio: AspectRatioState,
+  dependencies: AppDependencies,
+): AppState {
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return state;
+  }
+  const updated = updateGraphStyle(
+    state,
+    (style) => ({ ...style, presetOrigin: "custom", width, height }),
+    dependencies,
+  );
+  return {
+    ...updated,
+    rendering: { ...updated.rendering, aspectRatio: { ...aspectRatio, error: null } },
+  };
+}
+
+export function setAspectRatioLock(
+  state: AppState,
+  locked: boolean,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  if (!locked) {
+    return {
+      ...state,
+      rendering: {
+        ...state.rendering,
+        aspectRatio: { ...state.rendering.aspectRatio, locked: false, preset: "free", error: null },
+      },
+    };
+  }
+  const ratio = parseAspectRatio(state.rendering.aspectRatio);
+  if (ratio === null) {
+    return {
+      ...state,
+      rendering: {
+        ...state.rendering,
+        aspectRatio: { ...state.rendering.aspectRatio, error: aspectRatioError() },
+      },
+    };
+  }
+  const [widthRatio, heightRatio] = ratio;
+  const aspectRatio = { ...state.rendering.aspectRatio, locked: true, error: null };
+  return updateFigureStyle(
+    state,
+    state.rendering.graphStyle.width,
+    roundFigureDimension(state.rendering.graphStyle.width * heightRatio / widthRatio),
+    aspectRatio,
+    dependencies,
+  );
+}
+
+export function selectAspectRatioPreset(
+  state: AppState,
+  preset: Exclude<AspectRatioPreset, "custom">,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  const ratio = ASPECT_RATIO_PRESETS[preset];
+  if (ratio === null) {
+    return {
+      ...state,
+      rendering: {
+        ...state.rendering,
+        aspectRatio: { ...state.rendering.aspectRatio, locked: false, preset: "free", error: null },
+      },
+    };
+  }
+  const [widthRatio, heightRatio] = ratio;
+  const aspectRatio: AspectRatioState = {
+    locked: true,
+    widthRatioInput: String(widthRatio),
+    heightRatioInput: String(heightRatio),
+    preset,
+    error: null,
+  };
+  return updateFigureStyle(
+    state,
+    state.rendering.graphStyle.width,
+    roundFigureDimension(state.rendering.graphStyle.width * heightRatio / widthRatio),
+    aspectRatio,
+    dependencies,
+  );
+}
+
+export function updateAspectRatioInput(
+  state: AppState,
+  side: "width" | "height",
+  rawValue: string,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  const aspectRatio: AspectRatioState = {
+    ...state.rendering.aspectRatio,
+    widthRatioInput: side === "width" ? rawValue : state.rendering.aspectRatio.widthRatioInput,
+    heightRatioInput: side === "height" ? rawValue : state.rendering.aspectRatio.heightRatioInput,
+    preset: "custom",
+    error: null,
+  };
+  const ratio = parseAspectRatio(aspectRatio);
+  if (ratio === null) {
+    return {
+      ...state,
+      rendering: {
+        ...state.rendering,
+        aspectRatio: { ...aspectRatio, error: aspectRatioError() },
+      },
+    };
+  }
+  if (!aspectRatio.locked) {
+    return {
+      ...state,
+      rendering: { ...state.rendering, aspectRatio },
+    };
+  }
+  const [widthRatio, heightRatio] = ratio;
+  return updateFigureStyle(
+    state,
+    state.rendering.graphStyle.width,
+    roundFigureDimension(state.rendering.graphStyle.width * heightRatio / widthRatio),
+    aspectRatio,
+    dependencies,
+  );
+}
+
+export function updateFigureWidth(
+  state: AppState,
+  width: number,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  if (!Number.isFinite(width) || width <= 0) return state;
+  const ratio = parseAspectRatio(state.rendering.aspectRatio);
+  const height = state.rendering.aspectRatio.locked && ratio !== null
+    ? roundFigureDimension(width * ratio[1] / ratio[0])
+    : state.rendering.graphStyle.height;
+  return updateFigureStyle(state, width, height, state.rendering.aspectRatio, dependencies);
+}
+
+export function updateFigureHeight(
+  state: AppState,
+  height: number,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  if (!Number.isFinite(height) || height <= 0) return state;
+  const ratio = parseAspectRatio(state.rendering.aspectRatio);
+  const width = state.rendering.aspectRatio.locked && ratio !== null
+    ? roundFigureDimension(height * ratio[0] / ratio[1])
+    : state.rendering.graphStyle.width;
+  return updateFigureStyle(state, width, height, state.rendering.aspectRatio, dependencies);
 }
 
 export function canExportSvg(state: AppState): boolean {
