@@ -9,6 +9,8 @@ interface StoichiometricStage {
   stepIds: string[];
 }
 
+export type PHAtVolumeCalculator = (volumeMl: number) => number;
+
 function getProtonCapacity(substance: Substance): number {
   return substance.acidBaseModel.kind === "strong-hydroxide"
     ? substance.acidBaseModel.hydroxideStoichiometry
@@ -35,7 +37,10 @@ function loadPair(input: TitrationInput): { analyte: Substance; titrant: Substan
   return { analyte, titrant };
 }
 
-export function calculateEquivalencePoints(input: TitrationInput): EquivalencePoint[] {
+export function calculateEquivalencePoints(
+  input: TitrationInput,
+  calculatePH: PHAtVolumeCalculator = (volumeMl) => calculatePHAtVolume(input, volumeMl),
+): EquivalencePoint[] {
   const { analyte, titrant } = loadPair(input);
   const analyteMoles = input.analyteConcentrationMolL * input.analyteVolumeMl / 1000;
   const titrantCapacity = getProtonCapacity(titrant);
@@ -47,7 +52,7 @@ export function calculateEquivalencePoints(input: TitrationInput): EquivalencePo
       id: `equivalence-${index + 1}`,
       order: index + 1,
       volumeMl,
-      pH: calculatePHAtVolume(input, volumeMl),
+      pH: calculatePH(volumeMl),
       classification: "theoretical",
       stoichiometricEquivalent: stage.equivalent,
       participatingStepIds: stage.stepIds,
@@ -58,6 +63,7 @@ export function calculateEquivalencePoints(input: TitrationInput): EquivalencePo
 export function calculateHalfEquivalencePoints(
   input: TitrationInput,
   equivalencePoints: readonly EquivalencePoint[] = calculateEquivalencePoints(input),
+  calculatePH: PHAtVolumeCalculator = (volumeMl) => calculatePHAtVolume(input, volumeMl),
 ): CharacteristicPoint[] {
   let previousVolumeMl = 0;
   return equivalencePoints.map((equivalencePoint, index) => {
@@ -68,7 +74,7 @@ export function calculateHalfEquivalencePoints(
       type: "half-equivalence",
       order: index + 1,
       volumeMl,
-      pH: calculatePHAtVolume(input, volumeMl),
+      pH: calculatePH(volumeMl),
       relatedEquivalencePointIds: [equivalencePoint.id],
     };
   });
