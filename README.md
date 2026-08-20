@@ -4,7 +4,7 @@
 
 ## 現在のPhase
 
-現在はPhase 3です。Phase 2までの化学計算に加え、全当量点周辺を高密度化するadaptive samplingと、描画可能な`CurvePoint[]`を返す滴定曲線データ生成までを実装しています。
+現在はPhase 4です。Phase 3までの滴定曲線データ生成に加え、軸・目盛り・グリッド・複数guide・markerを含む決定的なSVG rendererまでを実装しています。
 
 現時点の画面は開発基盤の動作確認用であり、滴定曲線を操作する完成UIではありません。
 
@@ -66,7 +66,7 @@ npm run build
 - [酸塩基平衡・計算仕様](./docs/calculation-spec.md)
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
 
-## Phase 3までに実装済み
+## Phase 4までに実装済み
 
 - 多段階のprotonation speciesとdissociation stepを表すDomain Model
 - `complete`と`equilibrium`を区別する解離step
@@ -88,13 +88,20 @@ npm run build
 - 0 mL、範囲末端、全範囲内当量点・半当量点のexact anchor
 - 浮動小数点近接値を含むsampling volumeの重複除去と昇順保証
 - `calculateTitrationCurve`による完全な`TitrationResult` / `CurvePoint[]`生成
+- `renderTitrationSvg(result, style)`によるpureなSVG文字列生成
+- straight-segment curve pathとplot area `clipPath`
+- X/Y独立axis、major/minor ticks、nice X ticks、tick formatter
+- horizontal/vertical gridの独立表示
+- 複数equivalence/characteristic guidesとcircle markers
+- white/transparent background、title/axis label、XML escaping
+- Default / Exam / Teaching GraphStyle factory・pure preset
 
 定数値は試験問題・教材との整合を優先します。酢酸`Ka = 2.69e-5`、アンモニア`Kb = 2.3e-5`、シュウ酸`Ka1 = 9.12e-2`、`Ka2 = 1.51e-4`を高校教材用プロファイルとして採用し、NH4+のKaは同じ25 ℃のKwから導出しています。
 
 ## 現在未実装の機能
 
-- SVG rendererとPreview
+- browser Preview / 完成UI
 - PNG/SVG Export
 - 滴定条件・図版styleを編集するUI本体
 
-これらは設計文書に定めた後続Phaseで実装します。Phase 3のcurve APIはUIやrendererから独立しており、現時点の画面は引き続き開発基盤の動作確認用です。
+これらは設計文書に定めた後続Phaseで実装します。Phase 4のSVG文字列は将来のPreviewとSVG Exportが共有するsingle source of truthであり、現時点の画面は引き続き開発基盤の動作確認用です。

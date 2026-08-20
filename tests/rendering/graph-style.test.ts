@@ -76,15 +76,22 @@ const graphStyle: GraphStyle = {
       pattern: "dashed",
       color: "#444444",
     },
+    marker: { visible: true, color: "#000000", radius: 3 },
   },
   characteristicPoints: {
     showAll: false,
     visibilityById: { "half-eq-1": true, "half-eq-2": false },
-    color: "#000000",
-    radius: 3,
+    line: {
+      visible: true,
+      width: 0.75,
+      pattern: "dotted",
+      color: "#666666",
+    },
+    marker: { visible: true, color: "#000000", radius: 3 },
   },
   title: { visible: false, text: "滴定曲線" },
   background: "white",
+  annotationsVisible: false,
 };
 
 describe("graph style model", () => {

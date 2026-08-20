@@ -38,13 +38,20 @@ export interface FeatureVisibility {
   visibilityById: Record<string, boolean>;
 }
 
+export interface MarkerStyle {
+  visible: boolean;
+  color: string;
+  radius: number;
+}
+
 export interface EquivalenceGuideStyle extends FeatureVisibility {
   line: LineStyle;
+  marker: MarkerStyle;
 }
 
 export interface CharacteristicPointStyle extends FeatureVisibility {
-  color: string;
-  radius: number;
+  line: LineStyle;
+  marker: MarkerStyle;
 }
 
 export interface TitleStyle {
@@ -55,6 +62,7 @@ export interface TitleStyle {
 export type GraphBackground = "white" | "transparent";
 
 export interface GraphStyle {
+  presetOrigin?: "exam" | "teaching" | "custom";
   width: number;
   height: number;
   xMin: number;
@@ -70,4 +78,5 @@ export interface GraphStyle {
   characteristicPoints: CharacteristicPointStyle;
   title: TitleStyle;
   background: GraphBackground;
+  annotationsVisible: boolean;
 }
