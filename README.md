@@ -1,5 +1,7 @@
 # titration-curve-editor
 
+<img src="public/app-icon-512.png" alt="Titration Curve Editor icon" width="128">
+
 高校化学の試験問題・授業教材・解説資料向けに、理論滴定曲線を編集可能なSVG/PNG図版として生成するローカルWebアプリです。
 
 ## 現在のPhase
@@ -63,6 +65,7 @@ npm run build
 - [プロジェクト仕様](./docs/project-specification.md)
 - [酸塩基平衡・計算仕様](./docs/calculation-spec.md)
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
+- [アイコンアセット](./docs/icon-assets.md)
 
 ## Phase 6までに実装済み
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Titration Curve Editor app icon</title>
+  <desc id="desc">A titration curve with pH and volume axes, three colored points, a burette, and an Erlenmeyer flask.</desc>
+
+  <rect x="10" y="10" width="492" height="492" rx="96" fill="#ffffff" stroke="#dce7f4" stroke-width="12"/>
+
+  <!-- pH / volume axes -->
+  <g fill="none" stroke="#17365f" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M88 410V82M88 410H350" stroke-width="14"/>
+    <path d="M78 96L88 76L98 96M336 400L356 410L336 420" stroke-width="10"/>
+  </g>
+  <g fill="#17365f" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">
+    <text x="48" y="72">pH</text>
+    <text x="358" y="425">V</text>
+  </g>
+
+  <!-- Titration curve -->
+  <path d="M111 367 C151 367 178 360 195 343 C217 321 215 279 225 251 C237 215 258 202 284 190 C315 175 320 139 325 103"
+        fill="none" stroke="#17365f" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="164" cy="360" r="15" fill="#2474d2" stroke="#ffffff" stroke-width="6"/>
+  <circle cx="230" cy="240" r="15" fill="#27a66b" stroke="#ffffff" stroke-width="6"/>
+  <circle cx="316" cy="151" r="15" fill="#e44848" stroke="#ffffff" stroke-width="6"/>
+
+  <!-- Burette -->
+  <g stroke="#17365f" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="390" y="69" width="31" height="170" rx="10" fill="#eaf5ff" stroke-width="10"/>
+    <path d="M397 92H414M397 118H409M397 144H414M397 170H409M397 196H414" fill="none" stroke="#78b8ef" stroke-width="7"/>
+    <path d="M405.5 239V270" fill="none" stroke-width="10"/>
+    <path d="M379 252H432" fill="none" stroke-width="11"/>
+    <circle cx="405.5" cy="252" r="9" fill="#ffffff" stroke-width="7"/>
+    <path d="M405.5 270L398 288H413Z" fill="#17365f" stroke="none"/>
+  </g>
+  <path d="M405 296 C398 305 396 310 396 314 C396 321 400 325 406 325 C412 325 417 321 417 314 C417 310 413 304 405 296Z" fill="#2474d2"/>
+
+  <!-- Erlenmeyer flask -->
+  <g stroke="#17365f" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M378 328V360L342 422 C333 438 344 455 362 455H458 C476 455 487 438 478 422L442 360V328" fill="#ffffff" stroke-width="11"/>
+    <path d="M374 328H446" fill="none" stroke-width="11"/>
+    <path d="M358 420 C382 407 431 435 463 414 L474 433 C478 441 472 448 462 448H357 C347 448 342 439 347 431Z" fill="#8bd8f7" stroke="none"/>
+    <path d="M354 420 C381 405 430 435 466 412" fill="none" stroke="#2474d2" stroke-width="8"/>
+  </g>
+</svg>
