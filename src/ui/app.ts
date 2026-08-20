@@ -1,7 +1,16 @@
 import { SUBSTANCES } from "../chemistry";
-import type { AxisStyle, GraphStyle, LinePattern } from "../domain/graph-style";
+import type {
+  AxisStyle,
+  GraphStyle,
+  LinePattern,
+  TickDirection,
+} from "../domain/graph-style";
 import { downloadSvg } from "../export";
-import { calculateNiceTickInterval } from "../rendering";
+import {
+  calculateNiceTickInterval,
+  FONT_FAMILY_PRESETS,
+  type FontFamilyPreset,
+} from "../rendering";
 import {
   applyPresetToState,
   canExportSvg,
@@ -31,6 +40,52 @@ const PATTERNS: ReadonlyArray<{ value: LinePattern; label: string }> = [
 
 function patternOptions(): string {
   return PATTERNS.map(({ value, label }) => `<option value="${value}">${label}</option>`).join("");
+}
+
+const TICK_DIRECTION_OPTIONS: ReadonlyArray<{ value: TickDirection; label: string }> = [
+  { value: "outside", label: "外向き" },
+  { value: "inside", label: "内向き" },
+  { value: "both", label: "両方向" },
+];
+
+function tickDirectionOptions(): string {
+  return TICK_DIRECTION_OPTIONS
+    .map(({ value, label }) => `<option value="${value}">${label}</option>`)
+    .join("");
+}
+
+const FONT_PRESET_OPTIONS: ReadonlyArray<{
+  value: FontFamilyPreset;
+  label: string;
+}> = [
+  { value: "gothic", label: "ゴシック体" },
+  { value: "mincho", label: "明朝体" },
+  { value: "century", label: "Century" },
+  { value: "msGothic", label: "MS ゴシック" },
+  { value: "msPGothic", label: "MS Pゴシック" },
+  { value: "msMincho", label: "MS 明朝" },
+  { value: "msPMincho", label: "MS P明朝" },
+  { value: "sansSerif", label: "sans-serif" },
+  { value: "serif", label: "serif" },
+];
+
+function fontPresetOptions(): string {
+  return FONT_PRESET_OPTIONS
+    .map(({ value, label }) => `<option value="${value}">${label}</option>`)
+    .join("") + '<option value="custom">任意指定</option>';
+}
+
+const TYPOGRAPHY_FONT_CONTROLS = [
+  { prefix: "tick-label", property: "tickLabelFontFamily" },
+  { prefix: "axis-label", property: "axisLabelFontFamily" },
+  { prefix: "title", property: "titleFontFamily" },
+] as const;
+
+function identifyFontPreset(fontFamily: string): FontFamilyPreset | "custom" {
+  for (const [preset, value] of Object.entries(FONT_FAMILY_PRESETS)) {
+    if (value === fontFamily) return preset as FontFamilyPreset;
+  }
+  return "custom";
 }
 
 export const APP_TEMPLATE = `
@@ -115,6 +170,10 @@ export const APP_TEMPLATE = `
                 <label for="x-axis-width">軸線の太さ</label><input id="x-axis-width" type="number" min="0.5" max="8" step="0.1" />
                 <label for="x-axis-pattern">軸線の線種</label><select id="x-axis-pattern">${patternOptions()}</select>
                 <label for="x-axis-color">軸線の色</label><input id="x-axis-color" type="color" />
+                <label for="x-label-position-mode">ラベル位置</label>
+                <select id="x-label-position-mode"><option value="auto">自動</option><option value="custom">指定</option></select>
+                <label for="x-label-along-axis">軸上の位置</label><input id="x-label-along-axis" type="number" min="0" max="1" step="0.05" />
+                <label for="x-label-offset">軸からの距離 <span>px</span></label><input id="x-label-offset" type="number" min="0" max="100" step="1" />
               </div>
             </fieldset>
             <fieldset>
@@ -126,6 +185,10 @@ export const APP_TEMPLATE = `
                 <label for="y-axis-width">軸線の太さ</label><input id="y-axis-width" type="number" min="0.5" max="8" step="0.1" />
                 <label for="y-axis-pattern">軸線の線種</label><select id="y-axis-pattern">${patternOptions()}</select>
                 <label for="y-axis-color">軸線の色</label><input id="y-axis-color" type="color" />
+                <label for="y-label-position-mode">ラベル位置</label>
+                <select id="y-label-position-mode"><option value="auto">自動</option><option value="custom">指定</option></select>
+                <label for="y-label-along-axis">軸上の位置</label><input id="y-label-along-axis" type="number" min="0" max="1" step="0.05" />
+                <label for="y-label-offset">軸からの距離 <span>px</span></label><input id="y-label-offset" type="number" min="0" max="100" step="1" />
               </div>
             </fieldset>
           </div>
@@ -138,6 +201,9 @@ export const APP_TEMPLATE = `
               <legend>X軸の目盛り</legend>
               <label class="check-row"><input id="x-major-visible" type="checkbox" /> 主目盛りを表示</label>
               <label class="check-row"><input id="x-tick-labels" type="checkbox" /> 目盛り数値を表示</label>
+              <label class="check-row"><input id="x-zero-label" type="checkbox" /> 原点の0を表示</label>
+              <label for="x-tick-direction">目盛り線の方向</label>
+              <select id="x-tick-direction">${tickDirectionOptions()}</select>
               <label class="check-row"><input id="x-major-auto" type="checkbox" /> 主目盛り間隔を自動設定</label>
               <label for="x-major-interval">主目盛り間隔</label>
               <input id="x-major-interval" type="number" min="0" step="any" />
@@ -149,6 +215,9 @@ export const APP_TEMPLATE = `
               <legend>Y軸の目盛り</legend>
               <label class="check-row"><input id="y-major-visible" type="checkbox" /> 主目盛りを表示</label>
               <label class="check-row"><input id="y-tick-labels" type="checkbox" /> 目盛り数値を表示</label>
+              <label class="check-row"><input id="y-zero-label" type="checkbox" /> 原点の0を表示</label>
+              <label for="y-tick-direction">目盛り線の方向</label>
+              <select id="y-tick-direction">${tickDirectionOptions()}</select>
               <label class="check-row"><input id="y-major-auto" type="checkbox" /> 主目盛り間隔を自動設定</label>
               <label for="y-major-interval">主目盛り間隔</label>
               <input id="y-major-interval" type="number" min="0" step="any" />
@@ -234,10 +303,20 @@ export const APP_TEMPLATE = `
               <label for="y-label-text">軸ラベル</label><input id="y-label-text" type="text" />
             </fieldset>
             <div class="control-grid">
+              <label for="tick-label-font-family-preset">目盛り数値のフォント</label>
+              <select id="tick-label-font-family-preset">${fontPresetOptions()}</select>
+              <label for="tick-label-font-family-custom">目盛り数値の任意フォント</label><input id="tick-label-font-family-custom" type="text" />
               <label for="tick-label-font-size">目盛り数値サイズ <span>px</span></label><input id="tick-label-font-size" type="number" min="6" max="48" step="1" />
+              <label for="axis-label-font-family-preset">軸ラベルのフォント</label>
+              <select id="axis-label-font-family-preset">${fontPresetOptions()}</select>
+              <label for="axis-label-font-family-custom">軸ラベルの任意フォント</label><input id="axis-label-font-family-custom" type="text" />
               <label for="axis-label-font-size">軸ラベルサイズ <span>px</span></label><input id="axis-label-font-size" type="number" min="6" max="48" step="1" />
+              <label for="title-font-family-preset">タイトルのフォント</label>
+              <select id="title-font-family-preset">${fontPresetOptions()}</select>
+              <label for="title-font-family-custom">タイトルの任意フォント</label><input id="title-font-family-custom" type="text" />
               <label for="title-font-size">タイトルサイズ <span>px</span></label><input id="title-font-size" type="number" min="6" max="48" step="1" />
             </div>
+            <p class="control-help">SVGにフォントファイルは埋め込みません。別のPCに指定フォントがない場合は代替フォントで表示されます。</p>
           </div>
         </details>
 
@@ -359,6 +438,8 @@ export function mountApp(root: HTMLElement): void {
     setValue(requiredElement<HTMLInputElement>(root, `${orientation}-axis-color`), axis.line.color);
     setCheckbox(requiredElement<HTMLInputElement>(root, `${orientation}-major-visible`), axis.showMajorTicks);
     setCheckbox(requiredElement<HTMLInputElement>(root, `${orientation}-tick-labels`), axis.showTickLabels);
+    setCheckbox(requiredElement<HTMLInputElement>(root, `${orientation}-zero-label`), axis.showZeroLabel);
+    setValue(requiredElement<HTMLSelectElement>(root, `${orientation}-tick-direction`), axis.tickDirection);
     const auto = axis.majorTickInterval === "auto";
     setCheckbox(requiredElement<HTMLInputElement>(root, `${orientation}-major-auto`), auto);
     const intervalInput = requiredElement<HTMLInputElement>(root, `${orientation}-major-interval`);
@@ -376,6 +457,16 @@ export function mountApp(root: HTMLElement): void {
     );
     setCheckbox(requiredElement<HTMLInputElement>(root, `${orientation}-label-visible`), axis.showLabel);
     setValue(requiredElement<HTMLInputElement>(root, `${orientation}-label-text`), axis.label);
+    setValue(
+      requiredElement<HTMLSelectElement>(root, `${orientation}-label-position-mode`),
+      axis.labelPosition.mode,
+    );
+    const alongAxis = requiredElement<HTMLInputElement>(root, `${orientation}-label-along-axis`);
+    const offset = requiredElement<HTMLInputElement>(root, `${orientation}-label-offset`);
+    setValue(alongAxis, String(axis.labelPosition.alongAxis));
+    setValue(offset, String(axis.labelPosition.offsetPx));
+    alongAxis.disabled = axis.labelPosition.mode === "auto";
+    offset.disabled = axis.labelPosition.mode === "auto";
   }
 
   function syncControls(): void {
@@ -447,6 +538,14 @@ export function mountApp(root: HTMLElement): void {
     setValue(requiredElement<HTMLInputElement>(root, "tick-label-font-size"), String(style.typography.tickLabelFontSize));
     setValue(requiredElement<HTMLInputElement>(root, "axis-label-font-size"), String(style.typography.axisLabelFontSize));
     setValue(requiredElement<HTMLInputElement>(root, "title-font-size"), String(style.typography.titleFontSize));
+    for (const { prefix, property } of TYPOGRAPHY_FONT_CONTROLS) {
+      const fontFamily = style.typography[property];
+      const fontPreset = identifyFontPreset(fontFamily);
+      setValue(requiredElement<HTMLSelectElement>(root, `${prefix}-font-family-preset`), fontPreset);
+      const customFont = requiredElement<HTMLInputElement>(root, `${prefix}-font-family-custom`);
+      setValue(customFont, fontFamily);
+      customFont.disabled = fontPreset !== "custom";
+    }
     requiredElement<HTMLButtonElement>(root, "preset-exam").setAttribute("aria-pressed", String(style.presetOrigin === "exam"));
     requiredElement<HTMLButtonElement>(root, "preset-teaching").setAttribute("aria-pressed", String(style.presetOrigin === "teaching"));
     const exportEnabled = canExportSvg(state);
@@ -508,9 +607,39 @@ export function mountApp(root: HTMLElement): void {
     bindSelect(`${orientation}-axis-color`, (style, color) => axisWith(style, orientation, (axis) => ({ ...axis, line: { ...axis.line, color } })));
     bindCheck(`${orientation}-major-visible`, (style, showMajorTicks) => axisWith(style, orientation, (axis) => ({ ...axis, showMajorTicks })));
     bindCheck(`${orientation}-tick-labels`, (style, showTickLabels) => axisWith(style, orientation, (axis) => ({ ...axis, showTickLabels })));
+    bindCheck(`${orientation}-zero-label`, (style, showZeroLabel) => axisWith(style, orientation, (axis) => ({ ...axis, showZeroLabel })));
+    bindSelect(`${orientation}-tick-direction`, (style, tickDirection) => axisWith(
+      style,
+      orientation,
+      (axis) => ({ ...axis, tickDirection: tickDirection as TickDirection }),
+    ));
     bindCheck(`${orientation}-minor-visible`, (style, showMinorTicks) => axisWith(style, orientation, (axis) => ({ ...axis, showMinorTicks, minorTickInterval: axis.minorTickInterval ?? "auto" })));
     bindCheck(`${orientation}-label-visible`, (style, showLabel) => axisWith(style, orientation, (axis) => ({ ...axis, showLabel })));
     bindText(`${orientation}-label-text`, (style, label) => axisWith(style, orientation, (axis) => ({ ...axis, label })));
+    bindSelect(`${orientation}-label-position-mode`, (style, mode) => axisWith(
+      style,
+      orientation,
+      (axis) => ({
+        ...axis,
+        labelPosition: { ...axis.labelPosition, mode: mode as AxisStyle["labelPosition"]["mode"] },
+      }),
+    ));
+    bindNumber(
+      `${orientation}-label-along-axis`,
+      (value) => value >= 0 && value <= 1,
+      (style, alongAxis) => axisWith(style, orientation, (axis) => ({
+        ...axis,
+        labelPosition: { ...axis.labelPosition, alongAxis },
+      })),
+    );
+    bindNumber(
+      `${orientation}-label-offset`,
+      (value) => value >= 0 && value <= 100,
+      (style, offsetPx) => axisWith(style, orientation, (axis) => ({
+        ...axis,
+        labelPosition: { ...axis.labelPosition, offsetPx },
+      })),
+    );
 
     const auto = requiredElement<HTMLInputElement>(root, `${orientation}-major-auto`);
     auto.addEventListener("change", () => styleOnly((style) => {
@@ -615,6 +744,29 @@ export function mountApp(root: HTMLElement): void {
     ...style,
     typography: { ...style.typography, titleFontSize },
   }));
+  for (const { prefix, property } of TYPOGRAPHY_FONT_CONTROLS) {
+    const fontPreset = requiredElement<HTMLSelectElement>(root, `${prefix}-font-family-preset`);
+    const customFont = requiredElement<HTMLInputElement>(root, `${prefix}-font-family-custom`);
+    fontPreset.addEventListener("change", () => {
+      if (fontPreset.value === "custom") {
+        customFont.disabled = false;
+        customFont.focus();
+        return;
+      }
+      const fontFamily = FONT_FAMILY_PRESETS[fontPreset.value as FontFamilyPreset];
+      styleOnly((style) => ({
+        ...style,
+        typography: { ...style.typography, [property]: fontFamily },
+      }));
+    });
+    customFont.addEventListener("input", () => {
+      if (customFont.value.trim().length === 0) return;
+      styleOnly((style) => ({
+        ...style,
+        typography: { ...style.typography, [property]: customFont.value },
+      }));
+    });
+  }
 
   const handleExport = (): void => {
     if (!canExportSvg(state) || state.rendering.svgString === null) return;

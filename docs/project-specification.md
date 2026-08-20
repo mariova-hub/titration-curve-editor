@@ -361,13 +361,20 @@ interface AxisStyle {
   majorTickInterval: number | "auto";
   minorTickInterval: number | "off" | "auto";
   tickLabelsVisible: boolean;
+  showZeroLabel: boolean;
   line: LineStyle;
   tickLengthPx: number;
   tickWidthPx: number;
+  tickDirection: "outside" | "inside" | "both";
+  labelPosition: {
+    mode: "auto" | "custom";
+    alongAxis: number;
+    offsetPx: number;
+  };
 }
 ```
 
-X/Y軸は独立した`AxisStyle`を持つ。`visible`は軸全体、`labelVisible`は軸ラベル、`tickLabelsVisible`は目盛り数値を制御する。軸範囲は表示上のclip領域であり、計算値を書き換えない。
+X/Y軸は独立した`AxisStyle`を持つ。`visible`は軸全体、`labelVisible`は軸ラベル、`tickLabelsVisible`は目盛り数値を制御する。`showZeroLabel`は0の目盛り線を残したまま数値ラベルだけを制御する。`tickDirection`と軸ラベル位置もX/Yで独立する。`alongAxis`は0〜1、`offsetPx`は0以上のfinite値とする。軸範囲は表示上のclip領域であり、計算値を書き換えない。
 
 ### 11.10 GraphStyleモデル
 
@@ -382,8 +389,11 @@ interface GraphStyle {
   title: { visible: boolean; text: string };
   typography: {
     tickLabelFontSize: number;
+    tickLabelFontFamily: string;
     axisLabelFontSize: number;
+    axisLabelFontFamily: string;
     titleFontSize: number;
+    titleFontFamily: string;
   };
   curve: LineStyle;
   xAxis: AxisStyle;
@@ -401,7 +411,7 @@ interface GraphStyle {
 
 PresetはGraphStyleの初期値を一括適用する操作であり、モード固定ではない。適用後は各項目を個別変更できる。化学計算条件をGraphStyleへ格納してはならない。
 
-UIの標準表示言語は日本語とし、化学式、pH、SVG、PNG、mol/L、mL等の標準表記はそのまま用いる。図のwidth/heightは自由指定に加え、任意の横比率・縦比率による縦横比固定を提供する。縦横比とtypographyは図版styleであり、変更時に化学計算またはsamplingを再実行しない。目盛り数値、軸ラベル、タイトルのfont sizeは独立した正のfinite値として保持する。
+UIの標準表示言語は日本語とし、化学式、pH、SVG、PNG、mol/L、mL等の標準表記はそのまま用いる。図のwidth/heightは自由指定に加え、任意の横比率・縦比率による縦横比固定を提供する。縦横比、目盛り方向、軸ラベル位置、原点ラベル表示、typographyは図版styleであり、変更時に化学計算またはsamplingを再実行しない。目盛り数値、軸ラベル、タイトルのfont sizeとfont familyは各系統で独立して保持する。Centuryは英数字を優先し、日本語用fallbackを含むstackとして提供する。SVGへフォントファイルは埋め込まない。
 
 ## 12. 複数当量点・特徴点対応
 

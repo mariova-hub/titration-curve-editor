@@ -12,7 +12,13 @@ import type {
   TitrationResult,
 } from "../domain/titration";
 import { RenderingError } from "./errors";
-import { calculatePlotArea, createCoordinateTransform, type CoordinateTransform, type PlotArea } from "./geometry";
+import {
+  calculatePlotArea,
+  createCoordinateTransform,
+  getOutsideTickExtent,
+  type CoordinateTransform,
+  type PlotArea,
+} from "./geometry";
 import { renderStrokeAttributes } from "./line-patterns";
 import { formatSvgNumber, formatTickValue } from "./numbers";
 import {
@@ -59,6 +65,16 @@ function validateAxis(axis: AxisStyle, label: string): void {
   }
   if (axis.minorTickInterval !== undefined && axis.minorTickInterval !== "auto") {
     validatePositiveFinite(axis.minorTickInterval, `${label}.minorTickInterval`);
+  }
+  if (
+    !Number.isFinite(axis.labelPosition.alongAxis) ||
+    axis.labelPosition.alongAxis < 0 ||
+    axis.labelPosition.alongAxis > 1
+  ) {
+    throw new RenderingError(`${label}.labelPosition.alongAxis must be finite and between 0 and 1.`);
+  }
+  if (!Number.isFinite(axis.labelPosition.offsetPx) || axis.labelPosition.offsetPx < 0) {
+    throw new RenderingError(`${label}.labelPosition.offsetPx must be a non-negative finite number.`);
   }
 }
 
@@ -109,6 +125,15 @@ function validateStyle(style: GraphStyle): PlotArea {
   validatePositiveFinite(style.typography.tickLabelFontSize, "typography.tickLabelFontSize");
   validatePositiveFinite(style.typography.axisLabelFontSize, "typography.axisLabelFontSize");
   validatePositiveFinite(style.typography.titleFontSize, "typography.titleFontSize");
+  for (const [label, fontFamily] of [
+    ["typography.tickLabelFontFamily", style.typography.tickLabelFontFamily],
+    ["typography.axisLabelFontFamily", style.typography.axisLabelFontFamily],
+    ["typography.titleFontFamily", style.typography.titleFontFamily],
+  ] as const) {
+    if (fontFamily.trim().length === 0) {
+      throw new RenderingError(`${label} must not be empty.`);
+    }
+  }
   const plotArea = calculatePlotArea(style);
   if (plotArea.width <= 0 || plotArea.height <= 0) {
     throw new RenderingError("Figure is too small for the required plot margins.");
@@ -140,6 +165,20 @@ function hashString(value: string): string {
 
 function isVisible(feature: FeatureVisibility, id: string): boolean {
   return feature.visibilityById[id] ?? feature.showAll;
+}
+
+function isEffectivelyZero(value: number, interval: number): boolean {
+  const tolerance = Number.EPSILON * Math.max(1, Math.abs(interval)) * 64;
+  return Math.abs(value) <= tolerance;
+}
+
+function tickExtents(
+  direction: AxisStyle["tickDirection"],
+  length: number,
+): { inside: number; outside: number } {
+  if (direction === "inside") return { inside: length, outside: 0 };
+  if (direction === "both") return { inside: length / 2, outside: length / 2 };
+  return { inside: 0, outside: length };
 }
 
 function renderCurvePath(
@@ -254,34 +293,48 @@ function renderAxis(
   }
   const renderTick = (value: number, major: boolean): void => {
     const length = major ? axis.tickLength : axis.tickLength * 0.6;
+    const extents = tickExtents(axis.tickDirection, length);
     const coordinate = orientation === "x" ? transform.xToPx(value) : transform.yToPx(value);
     geometry.push(
       orientation === "x"
-        ? `<line data-role="${major ? "major-tick" : "minor-tick"}" data-value="${formatTickValue(value)}" x1="${formatSvgNumber(coordinate)}" y1="${formatSvgNumber(plot.bottom)}" x2="${formatSvgNumber(coordinate)}" y2="${formatSvgNumber(plot.bottom + length)}" stroke="${escapeXml(axis.line.color)}" stroke-width="${formatSvgNumber(axis.tickWidth)}" />`
-        : `<line data-role="${major ? "major-tick" : "minor-tick"}" data-value="${formatTickValue(value)}" x1="${formatSvgNumber(plot.left - length)}" y1="${formatSvgNumber(coordinate)}" x2="${formatSvgNumber(plot.left)}" y2="${formatSvgNumber(coordinate)}" stroke="${escapeXml(axis.line.color)}" stroke-width="${formatSvgNumber(axis.tickWidth)}" />`,
+        ? `<line data-role="${major ? "major-tick" : "minor-tick"}" data-direction="${axis.tickDirection}" data-value="${formatTickValue(value)}" x1="${formatSvgNumber(coordinate)}" y1="${formatSvgNumber(plot.bottom - extents.inside)}" x2="${formatSvgNumber(coordinate)}" y2="${formatSvgNumber(plot.bottom + extents.outside)}" stroke="${escapeXml(axis.line.color)}" stroke-width="${formatSvgNumber(axis.tickWidth)}" />`
+        : `<line data-role="${major ? "major-tick" : "minor-tick"}" data-direction="${axis.tickDirection}" data-value="${formatTickValue(value)}" x1="${formatSvgNumber(plot.left - extents.outside)}" y1="${formatSvgNumber(coordinate)}" x2="${formatSvgNumber(plot.left + extents.inside)}" y2="${formatSvgNumber(coordinate)}" stroke="${escapeXml(axis.line.color)}" stroke-width="${formatSvgNumber(axis.tickWidth)}" />`,
     );
   };
   if (axis.showMajorTicks) for (const value of tickModel.majorTicks) renderTick(value, true);
   if (axis.showMinorTicks) for (const value of tickModel.minorTicks) renderTick(value, false);
   if (axis.showTickLabels) {
     const tickFontSize = style.typography.tickLabelFontSize;
+    const tickFontFamily = escapeXml(style.typography.tickLabelFontFamily);
+    const outsideTickExtent = getOutsideTickExtent(axis);
     for (const value of tickModel.majorTicks) {
+      if (!axis.showZeroLabel && isEffectivelyZero(value, tickModel.majorInterval)) continue;
       const text = formatTickValue(value);
       labels.push(
         orientation === "x"
-          ? `<text data-role="tick-label" data-axis="x" x="${formatSvgNumber(transform.xToPx(value))}" y="${formatSvgNumber(plot.bottom + axis.tickLength + tickFontSize + 5)}" text-anchor="middle" font-size="${formatSvgNumber(tickFontSize)}">${text}</text>`
-          : `<text data-role="tick-label" data-axis="y" x="${formatSvgNumber(plot.left - axis.tickLength - 8)}" y="${formatSvgNumber(transform.yToPx(value) + tickFontSize / 3)}" text-anchor="end" font-size="${formatSvgNumber(tickFontSize)}">${text}</text>`,
+          ? `<text data-role="tick-label" data-axis="x" data-value="${text}" x="${formatSvgNumber(transform.xToPx(value))}" y="${formatSvgNumber(plot.bottom + outsideTickExtent + tickFontSize + 5)}" text-anchor="middle" font-size="${formatSvgNumber(tickFontSize)}" font-family="${tickFontFamily}">${text}</text>`
+          : `<text data-role="tick-label" data-axis="y" data-value="${text}" x="${formatSvgNumber(plot.left - outsideTickExtent - 8)}" y="${formatSvgNumber(transform.yToPx(value) + tickFontSize / 3)}" text-anchor="end" font-size="${formatSvgNumber(tickFontSize)}" font-family="${tickFontFamily}">${text}</text>`,
       );
     }
   }
   if (axis.showLabel) {
     const axisFontSize = style.typography.axisLabelFontSize;
-    const yLabelX = Math.max(18, axisFontSize + 4);
-    const xLabelY = style.height - Math.max(12, axisFontSize * 0.25 + 6);
+    const axisFontFamily = escapeXml(style.typography.axisLabelFontFamily);
+    const autoYLabelX = Math.max(18, axisFontSize + 4);
+    const autoXLabelY = style.height - Math.max(12, axisFontSize * 0.25 + 6);
+    const custom = axis.labelPosition.mode === "custom";
+    const xLabelX = custom
+      ? plot.left + axis.labelPosition.alongAxis * plot.width
+      : (plot.left + plot.right) / 2;
+    const xLabelY = custom ? plot.bottom + axis.labelPosition.offsetPx : autoXLabelY;
+    const yLabelX = custom ? plot.left - axis.labelPosition.offsetPx : autoYLabelX;
+    const yLabelY = custom
+      ? plot.bottom - axis.labelPosition.alongAxis * plot.height
+      : (plot.top + plot.bottom) / 2;
     labels.push(
       orientation === "x"
-        ? `<text data-role="axis-label" data-axis="x" x="${formatSvgNumber((plot.left + plot.right) / 2)}" y="${formatSvgNumber(xLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSize)}">${escapeXml(axis.label)}</text>`
-        : `<text data-role="axis-label" data-axis="y" x="${formatSvgNumber(yLabelX)}" y="${formatSvgNumber((plot.top + plot.bottom) / 2)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSize)}" transform="rotate(-90 ${formatSvgNumber(yLabelX)} ${formatSvgNumber((plot.top + plot.bottom) / 2)})">${escapeXml(axis.label)}</text>`,
+        ? `<text data-role="axis-label" data-axis="x" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(xLabelX)}" y="${formatSvgNumber(xLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSize)}" font-family="${axisFontFamily}">${escapeXml(axis.label)}</text>`
+        : `<text data-role="axis-label" data-axis="y" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(yLabelX)}" y="${formatSvgNumber(yLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSize)}" font-family="${axisFontFamily}" transform="rotate(-90 ${formatSvgNumber(yLabelX)} ${formatSvgNumber(yLabelY)})">${escapeXml(axis.label)}</text>`,
     );
   }
   return {
@@ -317,10 +370,10 @@ export function renderTitrationSvg(result: TitrationResult, style: GraphStyle): 
     ? `<g data-role="curve" clip-path="url(#${clipId})"><path data-role="titration-curve" data-source-point-count="${result.points.length}" d="${pathData}" fill="none" ${renderStrokeAttributes(style.curve)} /></g>`
     : "";
   const title = style.title.visible
-    ? `<text data-role="title" x="${formatSvgNumber(style.width / 2)}" y="${formatSvgNumber(Math.max(28, style.typography.titleFontSize + 8))}" text-anchor="middle" font-size="${formatSvgNumber(style.typography.titleFontSize)}">${escapeXml(style.title.text)}</text>`
+    ? `<text data-role="title" x="${formatSvgNumber(style.width / 2)}" y="${formatSvgNumber(Math.max(28, style.typography.titleFontSize + 8))}" text-anchor="middle" font-size="${formatSvgNumber(style.typography.titleFontSize)}" font-family="${escapeXml(style.typography.titleFontFamily)}">${escapeXml(style.title.text)}</text>`
     : "";
   const labelContent = xAxis.labels + yAxis.labels + title;
   const labels = labelContent.length === 0 ? "" : `<g data-role="labels">${labelContent}</g>`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${formatSvgNumber(style.width)}" height="${formatSvgNumber(style.height)}" viewBox="0 0 ${formatSvgNumber(style.width)} ${formatSvgNumber(style.height)}" font-family="Arial, sans-serif"><defs><clipPath id="${clipId}"><rect data-role="plot-area" x="${formatSvgNumber(plot.left)}" y="${formatSvgNumber(plot.top)}" width="${formatSvgNumber(plot.width)}" height="${formatSvgNumber(plot.height)}" /></clipPath></defs>${background}${grid}${features.guides}<g data-role="axes">${axes}</g>${curve}${features.markers}${labels}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${formatSvgNumber(style.width)}" height="${formatSvgNumber(style.height)}" viewBox="0 0 ${formatSvgNumber(style.width)} ${formatSvgNumber(style.height)}"><defs><clipPath id="${clipId}"><rect data-role="plot-area" x="${formatSvgNumber(plot.left)}" y="${formatSvgNumber(plot.top)}" width="${formatSvgNumber(plot.width)}" height="${formatSvgNumber(plot.height)}" /></clipPath></defs>${background}${grid}${features.guides}<g data-role="axes">${axes}</g>${curve}${features.markers}${labels}</svg>`;
 }

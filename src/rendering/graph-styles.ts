@@ -7,22 +7,45 @@ import type {
   TypographyStyle,
 } from "../domain/graph-style";
 
+export const FONT_FAMILY_PRESETS = {
+  gothic: '"Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif',
+  mincho: '"Yu Mincho", "Hiragino Mincho ProN", serif',
+  msGothic: '"MS Gothic", monospace',
+  msPGothic: '"MS PGothic", sans-serif',
+  msMincho: '"MS Mincho", serif',
+  msPMincho: '"MS PMincho", serif',
+  century: '"Century", "Yu Mincho", "MS Mincho", serif',
+  sansSerif: "Arial, sans-serif",
+  serif: '"Times New Roman", serif',
+} as const;
+
+export type FontFamilyPreset = keyof typeof FONT_FAMILY_PRESETS;
+
 export const DEFAULT_TYPOGRAPHY: Readonly<TypographyStyle> = {
   tickLabelFontSize: 12,
+  tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   axisLabelFontSize: 14,
+  axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   titleFontSize: 18,
+  titleFontFamily: FONT_FAMILY_PRESETS.sansSerif,
 };
 
 export const EXAM_TYPOGRAPHY: Readonly<TypographyStyle> = {
   tickLabelFontSize: 12,
+  tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   axisLabelFontSize: 14,
+  axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   titleFontSize: 18,
+  titleFontFamily: FONT_FAMILY_PRESETS.sansSerif,
 };
 
 export const TEACHING_TYPOGRAPHY: Readonly<TypographyStyle> = {
   tickLabelFontSize: 13,
+  tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   axisLabelFontSize: 15,
+  axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
   titleFontSize: 19,
+  titleFontFamily: FONT_FAMILY_PRESETS.sansSerif,
 };
 
 function line(
@@ -48,8 +71,11 @@ function axis(label: string, majorTickInterval: number | "auto"): AxisStyle {
     showMajorTicks: true,
     showMinorTicks: false,
     showTickLabels: true,
+    showZeroLabel: true,
     tickLength: 6,
     tickWidth: 1,
+    tickDirection: "outside",
+    labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
   };
 }
 
@@ -99,6 +125,9 @@ function blackAxis(source: AxisStyle): AxisStyle {
     showMajorTicks: true,
     showMinorTicks: false,
     showTickLabels: true,
+    showZeroLabel: true,
+    tickDirection: "outside",
+    labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
   };
 }
 
@@ -139,8 +168,24 @@ export function applyTeachingPreset(style: GraphStyle): GraphStyle {
     ...source,
     presetOrigin: "teaching",
     curve: { ...source.curve },
-    xAxis: { ...source.xAxis, visible: true, showLabel: true, showTickLabels: true },
-    yAxis: { ...source.yAxis, visible: true, showLabel: true, showTickLabels: true },
+    xAxis: {
+      ...source.xAxis,
+      visible: true,
+      showLabel: true,
+      showTickLabels: true,
+      showZeroLabel: true,
+      tickDirection: "outside",
+      labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
+    },
+    yAxis: {
+      ...source.yAxis,
+      visible: true,
+      showLabel: true,
+      showTickLabels: true,
+      showZeroLabel: true,
+      tickDirection: "outside",
+      labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
+    },
     horizontalGrid: grid(true),
     verticalGrid: grid(true),
     equivalenceGuides: {

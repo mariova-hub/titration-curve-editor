@@ -138,6 +138,9 @@ X軸とY軸はそれぞれ次を独立に持つ。
 - `line color`
 - `tick length`
 - `tick width`
+- `tick direction`: outside / inside / both
+- `show zero label`: 原点0の数値表示ON/OFF
+- `axis label position`: auto / custom、軸上位置、軸からの距離
 
 `min < max`を必須とする。X軸単位は表示上mL、Calculation結果はLで保持し、座標変換前のview modelで明示的に変換する。Y軸はpHである。
 
@@ -165,6 +168,20 @@ tick生成はsampling点から独立し、curve point数や当量点数を増減
 - `tickLabelsVisible = false`でも軸線とtick markは表示できる。
 - minor tickが`off`ならminor tick要素を生成しない。
 - Graph title、X label、Y label、tick labels、grid、equivalence guide、characteristic markerはそれぞれ独立設定とする。
+
+### 7.5 目盛り方向と原点表示
+
+- `outside`はplot外側、`inside`はplot内側、`both`は`tickLength`を軸中心で半分ずつ内外へ伸ばす。
+- major/minor tickへ同じ方向を適用する。X/Yは独立設定とする。
+- marginへ加えるtick長はoutsideの全長、bothの半分、insideは0とする。tick labelは常に外側へ配置する。
+- `showZeroLabel = false`では、数値誤差を考慮して0と判定したmajor tickのtextだけを省略する。tick mark、軸線、0以外のlabelは残す。
+
+### 7.6 軸ラベル位置
+
+- `auto`は既存の中央位置とmarginを維持する。
+- `custom`では`alongAxis`を0〜1で指定する。X軸は左から右、Y軸は下から上へ増加する。
+- `offsetPx`は軸から外側への距離とし、UIでは0〜100 pxに制限する。Y軸labelのrotation中心は指定後のX/Y座標と一致させる。
+- 目盛り方向・原点表示・軸ラベル位置の変更はrendererだけを再実行する。
 
 ## 8. Guides / Markers
 
@@ -234,7 +251,7 @@ Preset適用後の個別変更は`presetOrigin`を履歴情報として残して
 
 ### 10.1 Typography
 
-`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeを独立して保持する。各値は正のfinite px値とし、renderer内へ固定font sizeを残さない。Exam/Teaching presetはtypography初期値を明示し、適用後の個別変更を許可する。font size変更はcurve point、sampling、化学計算結果を変更しない。
+`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeとfont familyを3系統で独立して保持する。各font sizeは正のfinite px値、各font familyは空でない文字列とし、renderer内へ固定font設定を残さない。ゴシック体、明朝体、MS系日本語フォント、sans-serif、serif、Century、任意指定を各系統のUIで提供し、属性値はXML escapeする。Century stackは`"Century", "Yu Mincho", "MS Mincho", serif`とし、英数字ではCenturyを優先し、日本語グリフは後続fontへfallbackする。Exam/Teaching presetは現行外観を維持するtypography初期値を明示し、適用後の個別変更を許可する。SVGへフォントファイルやweb fontを埋め込まず、別環境ではfallbackされることをUI/READMEへ明記する。font変更はcurve point、sampling、化学計算結果を変更しない。
 
 ## 11. Rendering pipeline
 
@@ -406,6 +423,8 @@ Vitestと、必要最小限のDOM環境を想定する。外観snapshotだけに
 - Y標準0–14、major interval 2で期待tick列になる
 - sampling point数を変えてもtick列が変わらない
 - tick labelに`-0`、NaN、Infinityがない
+- outside / inside / bothがX/Yおよびminor tickへ正しい座標で反映される
+- X/Yの`showZeroLabel`を全組合せで切り替え、0 tick markと非0 labelが残る
 
 ### 16.6 grid visibility
 
@@ -445,6 +464,10 @@ Vitestと、必要最小限のDOM環境を想定する。外観snapshotだけに
 - 非finiteまたは0以下のfont sizeをrendererがrejectする
 - typographyと縦横比の変更でcurve pointsが変わらず、Calculationを再実行しない
 - 主要Controls、preset、図のサイズ、出力操作が日本語で表示される
+- 各presetおよび任意font-familyを目盛り数値、軸ラベル、タイトルへ独立して反映できる
+- Centuryを目盛り数値、MS Minchoを軸ラベル、MS Gothicをタイトルへ同時指定できる
+- 各custom font-familyをXML escapeし、空文字列をrejectする
+- axis labelのauto回帰、custom alongAxis 0/0.5/1、offset、Y rotation中心を検証する
 
 ## 17. Sampling/data integrity tests
 

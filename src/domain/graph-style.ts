@@ -7,6 +7,16 @@ export const LINE_PATTERNS = [
 
 export type LinePattern = (typeof LINE_PATTERNS)[number];
 
+export const TICK_DIRECTIONS = ["outside", "inside", "both"] as const;
+
+export type TickDirection = (typeof TICK_DIRECTIONS)[number];
+
+export interface AxisLabelPosition {
+  mode: "auto" | "custom";
+  alongAxis: number;
+  offsetPx: number;
+}
+
 export interface LineStyle {
   visible: boolean;
   width: number;
@@ -24,8 +34,11 @@ export interface AxisStyle {
   showMajorTicks: boolean;
   showMinorTicks: boolean;
   showTickLabels: boolean;
+  showZeroLabel: boolean;
   tickLength: number;
   tickWidth: number;
+  tickDirection: TickDirection;
+  labelPosition: AxisLabelPosition;
 }
 
 export interface GridStyle {
@@ -61,8 +74,11 @@ export interface TitleStyle {
 
 export interface TypographyStyle {
   tickLabelFontSize: number;
+  tickLabelFontFamily: string;
   axisLabelFontSize: number;
+  axisLabelFontFamily: string;
   titleFontSize: number;
+  titleFontFamily: string;
 }
 
 export type GraphBackground = "white" | "transparent";

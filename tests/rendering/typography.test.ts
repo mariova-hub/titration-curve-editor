@@ -25,8 +25,11 @@ function typographyStyle(): GraphStyle {
   style.title = { visible: true, text: "滴定曲線" };
   style.typography = {
     tickLabelFontSize: 17,
+    tickLabelFontFamily: "Arial, sans-serif",
     axisLabelFontSize: 23,
+    axisLabelFontFamily: "Arial, sans-serif",
     titleFontSize: 31,
+    titleFontFamily: "Arial, sans-serif",
   };
   return style;
 }
@@ -42,9 +45,23 @@ describe("SVG typography", () => {
 
   it("increases the required margins when typography grows", () => {
     const small = typographyStyle();
-    small.typography = { tickLabelFontSize: 8, axisLabelFontSize: 10, titleFontSize: 12 };
+    small.typography = {
+      tickLabelFontSize: 8,
+      tickLabelFontFamily: "Arial, sans-serif",
+      axisLabelFontSize: 10,
+      axisLabelFontFamily: "Arial, sans-serif",
+      titleFontSize: 12,
+      titleFontFamily: "Arial, sans-serif",
+    };
     const large = typographyStyle();
-    large.typography = { tickLabelFontSize: 30, axisLabelFontSize: 36, titleFontSize: 42 };
+    large.typography = {
+      tickLabelFontSize: 30,
+      tickLabelFontFamily: "Arial, sans-serif",
+      axisLabelFontSize: 36,
+      axisLabelFontFamily: "Arial, sans-serif",
+      titleFontSize: 42,
+      titleFontFamily: "Arial, sans-serif",
+    };
     const smallPlot = calculatePlotArea(small);
     const largePlot = calculatePlotArea(large);
     expect(largePlot.left).toBeGreaterThan(smallPlot.left);

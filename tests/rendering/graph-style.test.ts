@@ -16,8 +16,11 @@ const xAxis: AxisStyle = {
   showMajorTicks: true,
   showMinorTicks: false,
   showTickLabels: true,
+  showZeroLabel: true,
   tickLength: 6,
   tickWidth: 1,
+  tickDirection: "outside",
+  labelPosition: { mode: "auto", alongAxis: 0.5, offsetPx: 32 },
 };
 
 const yAxis: AxisStyle = {
@@ -35,8 +38,11 @@ const yAxis: AxisStyle = {
   showMajorTicks: true,
   showMinorTicks: true,
   showTickLabels: false,
+  showZeroLabel: false,
   tickLength: 4,
   tickWidth: 0.75,
+  tickDirection: "inside",
+  labelPosition: { mode: "custom", alongAxis: 0.25, offsetPx: 20 },
 };
 
 const graphStyle: GraphStyle = {
@@ -91,8 +97,11 @@ const graphStyle: GraphStyle = {
   },
   typography: {
     tickLabelFontSize: 12,
+    tickLabelFontFamily: "Arial, sans-serif",
     axisLabelFontSize: 14,
+    axisLabelFontFamily: "Arial, sans-serif",
     titleFontSize: 18,
+    titleFontFamily: "Arial, sans-serif",
   },
   title: { visible: false, text: "滴定曲線" },
   background: "white",

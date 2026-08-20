@@ -110,8 +110,11 @@ describe("typography UI state", () => {
         ...style,
         typography: {
           tickLabelFontSize: 16,
+          tickLabelFontFamily: style.typography.tickLabelFontFamily,
           axisLabelFontSize: 20,
+          axisLabelFontFamily: style.typography.axisLabelFontFamily,
           titleFontSize: 28,
+          titleFontFamily: style.typography.titleFontFamily,
         },
       }),
       deps,
