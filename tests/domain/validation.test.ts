@@ -16,6 +16,10 @@ function errorCodes(input: TitrationInput): string[] {
   return validateTitrationInput(input, SUBSTANCES).errors.map(({ code }) => code);
 }
 
+function errorMessages(input: TitrationInput): string[] {
+  return validateTitrationInput(input, SUBSTANCES).errors.map(({ message }) => message);
+}
+
 describe("validateTitrationInput", () => {
   it("accepts a valid acid-base input", () => {
     expect(validateTitrationInput(validInput, SUBSTANCES)).toEqual({
@@ -114,5 +118,37 @@ describe("validateTitrationInput", () => {
       field: "analyteVolumeMl",
     });
     expect(result.errors[0]?.message.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    [
+      "acid + acid",
+      { analyteSubstanceId: "hcl", titrantSubstanceId: "hno3" },
+      "滴定される水溶液と滴下する水溶液には、酸と塩基の組み合わせを指定してください。",
+    ],
+    [
+      "base + base",
+      { analyteSubstanceId: "naoh", titrantSubstanceId: "koh" },
+      "滴定される水溶液と滴下する水溶液には、酸と塩基の組み合わせを指定してください。",
+    ],
+    [
+      "same substance",
+      { analyteSubstanceId: "hcl", titrantSubstanceId: "hcl" },
+      "滴定される水溶液と滴下する水溶液には、異なる物質を指定してください。",
+    ],
+    [
+      "invalid concentration",
+      { analyteConcentrationMolL: 0 },
+      "滴定される水溶液の濃度には0より大きい値を指定してください。",
+    ],
+    [
+      "invalid volume",
+      { analyteVolumeMl: 0 },
+      "滴定される水溶液の体積には0より大きい値を指定してください。",
+    ],
+  ] as const)("returns a fully Japanese message for %s", (_label, override, message) => {
+    const messages = errorMessages({ ...validInput, ...override });
+    expect(messages).toContain(message);
+    expect(messages.join(" ")).not.toMatch(/Analyte|Titrant/);
   });
 });

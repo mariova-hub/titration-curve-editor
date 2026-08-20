@@ -234,7 +234,8 @@ Microsoft Wordの試験問題でコピー・印刷しやすい小型モノクロ
 
 - axis labels visible
 - equivalence guides visible
-- optional grids（preset適用時の既定ON/OFFは受入れ前に固定）
+- horizontal grid ON
+- vertical grid ON
 - curveとguideを識別可能なstyle
 
 Teachingも化学計算を変更しない。Preset切替でsamplingを変えない。
@@ -529,7 +530,7 @@ Canvasのpixel比較はブラウザ・font差の影響を受けるため、MVP�
 
 - axis labels visible
 - 全equivalence guides visible
-- optional grid設定が反映される
+- horizontal/vertical gridがともに表示される
 - 複数guideとcurveを識別できる
 - guide表示が計算点やaxis tick数を変えない
 

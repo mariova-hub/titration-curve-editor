@@ -65,19 +65,19 @@ export function validateTitrationInput(
   validatePositiveFinite(
     input.analyteConcentrationMolL,
     "analyteConcentrationMolL",
-    "Analyte濃度",
+    "滴定される水溶液の濃度",
     errors,
   );
   validatePositiveFinite(
     input.analyteVolumeMl,
     "analyteVolumeMl",
-    "Analyte体積",
+    "滴定される水溶液の体積",
     errors,
   );
   validatePositiveFinite(
     input.titrantConcentrationMolL,
     "titrantConcentrationMolL",
-    "Titrant濃度",
+    "滴下する水溶液の濃度",
     errors,
   );
 
@@ -91,7 +91,7 @@ export function validateTitrationInput(
     errors.push({
       code: "unknown-substance",
       field: "analyteSubstanceId",
-      message: "Analyteの物質IDが物質マスターに登録されていません。",
+      message: "滴定される水溶液の物質IDが物質マスターに登録されていません。",
     });
   }
 
@@ -99,7 +99,7 @@ export function validateTitrationInput(
     errors.push({
       code: "unknown-substance",
       field: "titrantSubstanceId",
-      message: "Titrantの物質IDが物質マスターに登録されていません。",
+      message: "滴下する水溶液の物質IDが物質マスターに登録されていません。",
     });
   }
 
@@ -111,7 +111,7 @@ export function validateTitrationInput(
     errors.push({
       code: "same-substance",
       field: "substancePair",
-      message: "AnalyteとTitrantには異なる物質を指定してください。",
+      message: "滴定される水溶液と滴下する水溶液には、異なる物質を指定してください。",
     });
   } else if (
     analyte !== undefined &&
@@ -121,7 +121,7 @@ export function validateTitrationInput(
     errors.push({
       code: "incompatible-acid-base-pair",
       field: "substancePair",
-      message: "AnalyteとTitrantには酸と塩基の組み合わせを指定してください。",
+      message: "滴定される水溶液と滴下する水溶液には、酸と塩基の組み合わせを指定してください。",
     });
   }
 

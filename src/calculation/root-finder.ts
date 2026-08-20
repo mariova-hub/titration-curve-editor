@@ -80,19 +80,28 @@ export function solveLogHydrogenByBisection(
   for (let iteration = 1; iteration <= options.maxIterations; iteration += 1) {
     const midpoint = (left + right) / 2;
     const midpointEvaluation = evaluateFinite(residualFunction, midpoint);
+    const bestCandidate = [
+      { logH: left, evaluation: leftEvaluation },
+      { logH: midpoint, evaluation: midpointEvaluation },
+      { logH: right, evaluation: rightEvaluation },
+    ].reduce((best, candidate) =>
+      Math.abs(candidate.evaluation.residual) < Math.abs(best.evaluation.residual)
+        ? candidate
+        : best,
+    );
     const tolerance = Math.max(
       options.absoluteResidualTolerance,
-      options.relativeResidualTolerance * midpointEvaluation.scale,
+      options.relativeResidualTolerance * bestCandidate.evaluation.scale,
     );
 
     if (
-      Math.abs(midpointEvaluation.residual) <= tolerance ||
+      Math.abs(bestCandidate.evaluation.residual) <= tolerance &&
       (right - left) / 2 <= options.logHTolerance
     ) {
       return {
-        logH: midpoint,
+        logH: bestCandidate.logH,
         iterations: iteration,
-        residual: midpointEvaluation.residual,
+        residual: bestCandidate.evaluation.residual,
       };
     }
 

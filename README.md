@@ -4,7 +4,7 @@
 
 ## 現在のPhase
 
-現在はPhase 6です。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をSVGまたはPNGとして保存できる実用構成まで実装しています。
+現在はv1.0.0 Release Candidateです。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をSVGまたはPNGとして保存できる実用構成まで実装しています。
 
 ## 技術構成
 
@@ -18,7 +18,7 @@ React、Vue、Svelte等のUIフレームワーク、バックエンド、DB、�
 
 ## セットアップ
 
-Node.jsとnpmを用意し、リポジトリ直下で実行します。
+Node.jsとnpmを用意し、リポジトリ直下で実行します。Node.jsはVite 7の要件に合わせて`^20.19.0 || >=22.12.0`を使用してください。つまり、Node.js 20系では20.19.0以上、またはNode.js 22.12.0以上が必要です。
 
 ```sh
 npm install
@@ -100,6 +100,7 @@ npm run build
 - 入力validation、計算失敗のユーザー向け表示と、入力途中の直前Preview維持
 - 滴定条件変更時だけのcurve再計算と、style変更時のrenderer-only更新
 - Exam / Teaching preset controlsと、適用後の個別style編集
+- Teaching presetのhorizontal/vertical gridはともにON
 - curve、X/Y axes、range、major/minor ticks、grid、guide/marker、figure size、title/label controls
 - `renderTitrationSvg()`の出力を直接DOMへ表示するLive SVG Preview
 - Previewと同一のSVG文字列を`image/svg+xml;charset=utf-8`のBlobとして保存するSVG Export
