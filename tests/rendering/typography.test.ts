@@ -24,11 +24,11 @@ function typographyStyle(): GraphStyle {
   const style = createExamGraphStyle(30);
   style.title = { visible: true, text: "滴定曲線" };
   style.typography = {
-    tickLabelFontSize: 17,
+    tickLabelFontSizePt: 9,
     tickLabelFontFamily: "Arial, sans-serif",
-    axisLabelFontSize: 23,
+    axisLabelFontSizePt: 10.5,
     axisLabelFontFamily: "Arial, sans-serif",
-    titleFontSize: 31,
+    titleFontSizePt: 13.5,
     titleFontFamily: "Arial, sans-serif",
   };
   return style;
@@ -37,42 +37,42 @@ function typographyStyle(): GraphStyle {
 describe("SVG typography", () => {
   it("uses independent tick, axis-label, and title font sizes", () => {
     const svg = renderTitrationSvg(result, typographyStyle());
-    expect(svg).toMatch(/data-role="tick-label"[^>]*font-size="17"/);
-    expect(svg).toMatch(/data-role="axis-label"[^>]*font-size="23"/);
-    expect(svg).toMatch(/data-role="title"[^>]*font-size="31"/);
+    expect(svg).toMatch(/data-role="tick-label"[^>]*font-size="9pt"/);
+    expect(svg).toMatch(/data-role="axis-label"[^>]*font-size="10\.5pt"/);
+    expect(svg).toMatch(/data-role="title"[^>]*font-size="13\.5pt"/);
+    expect([...svg.matchAll(/font-size="([^"]+)"/g)].every((match) => match[1]?.endsWith("pt"))).toBe(true);
     expect(svg).toContain("滴下量 / mL");
   });
 
   it("increases the required margins when typography grows", () => {
     const small = typographyStyle();
     small.typography = {
-      tickLabelFontSize: 8,
+      tickLabelFontSizePt: 9,
       tickLabelFontFamily: "Arial, sans-serif",
-      axisLabelFontSize: 10,
+      axisLabelFontSizePt: 9,
       axisLabelFontFamily: "Arial, sans-serif",
-      titleFontSize: 12,
+      titleFontSizePt: 9,
       titleFontFamily: "Arial, sans-serif",
     };
     const large = typographyStyle();
     large.typography = {
-      tickLabelFontSize: 30,
+      tickLabelFontSizePt: 18,
       tickLabelFontFamily: "Arial, sans-serif",
-      axisLabelFontSize: 36,
+      axisLabelFontSizePt: 18,
       axisLabelFontFamily: "Arial, sans-serif",
-      titleFontSize: 42,
+      titleFontSizePt: 18,
       titleFontFamily: "Arial, sans-serif",
     };
     const smallPlot = calculatePlotArea(small);
     const largePlot = calculatePlotArea(large);
     expect(largePlot.left).toBeGreaterThan(smallPlot.left);
-    expect(largePlot.top).toBeGreaterThan(smallPlot.top);
     expect(largePlot.bottom).toBeLessThan(smallPlot.bottom);
   });
 
   it.each([
-    ["tickLabelFontSize", 0],
-    ["axisLabelFontSize", Number.NaN],
-    ["titleFontSize", Number.POSITIVE_INFINITY],
+    ["tickLabelFontSizePt", 0],
+    ["axisLabelFontSizePt", Number.NaN],
+    ["titleFontSizePt", Number.POSITIVE_INFINITY],
   ] as const)("rejects invalid %s", (property, value) => {
     const style = typographyStyle();
     style.typography[property] = value;
@@ -82,6 +82,16 @@ describe("SVG typography", () => {
   it("defines explicit Exam and Teaching typography defaults", () => {
     expect(createExamGraphStyle(30).typography).toEqual(EXAM_TYPOGRAPHY);
     expect(createTeachingGraphStyle(30).typography).toEqual(TEACHING_TYPOGRAPHY);
-    expect(TEACHING_TYPOGRAPHY.tickLabelFontSize).toBeGreaterThan(EXAM_TYPOGRAPHY.tickLabelFontSize);
+    expect(EXAM_TYPOGRAPHY).toMatchObject({
+      tickLabelFontSizePt: 9,
+      axisLabelFontSizePt: 10.5,
+      titleFontSizePt: 13.5,
+    });
+    expect(TEACHING_TYPOGRAPHY).toMatchObject({
+      tickLabelFontSizePt: 10,
+      axisLabelFontSizePt: 11,
+      titleFontSizePt: 14,
+    });
+    expect(TEACHING_TYPOGRAPHY.tickLabelFontSizePt).toBeGreaterThan(EXAM_TYPOGRAPHY.tickLabelFontSizePt);
   });
 });

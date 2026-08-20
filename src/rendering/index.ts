@@ -5,3 +5,4 @@ export * from "./line-patterns";
 export * from "./numbers";
 export * from "./svg-renderer";
 export * from "./ticks";
+export * from "./units";

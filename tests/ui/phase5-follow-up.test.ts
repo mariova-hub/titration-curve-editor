@@ -109,11 +109,11 @@ describe("typography UI state", () => {
       (style) => ({
         ...style,
         typography: {
-          tickLabelFontSize: 16,
+          tickLabelFontSizePt: 10.5,
           tickLabelFontFamily: style.typography.tickLabelFontFamily,
-          axisLabelFontSize: 20,
+          axisLabelFontSizePt: 12,
           axisLabelFontFamily: style.typography.axisLabelFontFamily,
-          titleFontSize: 28,
+          titleFontSizePt: 18,
           titleFontFamily: style.typography.titleFontFamily,
         },
       }),
@@ -122,6 +122,6 @@ describe("typography UI state", () => {
     expect(state.chemical.result?.points).toBe(points);
     expect(deps.calculateCurve).toHaveBeenCalledTimes(calculationCalls);
     expect(state.rendering.svgString).toContain('data-role="tick-label"');
-    expect(state.rendering.svgString).toContain('font-size="16"');
+    expect(state.rendering.svgString).toContain('font-size="10.5pt"');
   });
 });

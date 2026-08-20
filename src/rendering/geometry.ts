@@ -1,4 +1,5 @@
 import type { AxisStyle, GraphStyle } from "../domain/graph-style";
+import { ptToUserUnits } from "./units";
 
 export interface PlotArea {
   left: number;
@@ -34,16 +35,19 @@ export function getOutsideTickExtent(axis: AxisStyle): number {
 }
 
 export function calculatePlotArea(style: GraphStyle): PlotArea {
+  const tickLabelFontSize = ptToUserUnits(style.typography.tickLabelFontSizePt);
+  const axisLabelFontSize = ptToUserUnits(style.typography.axisLabelFontSizePt);
+  const titleFontSize = ptToUserUnits(style.typography.titleFontSizePt);
   const topMargin = style.title.visible
-    ? Math.max(52, style.typography.titleFontSize + 28)
+    ? Math.max(52, titleFontSize + 28)
     : 20;
   const rightMargin = 20;
   const xOutsideContent = 20 +
     getOutsideTickExtent(style.xAxis) +
-    (style.xAxis.showTickLabels ? style.typography.tickLabelFontSize + 10 : 0);
+    (style.xAxis.showTickLabels ? tickLabelFontSize + 10 : 0);
   const xLabelSpace = style.xAxis.labelPosition.mode === "auto"
-    ? style.typography.axisLabelFontSize + 16
-    : style.xAxis.labelPosition.offsetPx + style.typography.axisLabelFontSize + 8;
+    ? axisLabelFontSize + 16
+    : style.xAxis.labelPosition.offsetPx + axisLabelFontSize + 8;
   const bottomMargin = style.xAxis.visible
     ? style.xAxis.showLabel && style.xAxis.labelPosition.mode === "custom"
       ? Math.max(xOutsideContent, xLabelSpace)
@@ -52,11 +56,11 @@ export function calculatePlotArea(style: GraphStyle): PlotArea {
   const yOutsideContent = 20 +
     getOutsideTickExtent(style.yAxis) +
     (style.yAxis.showTickLabels
-      ? Math.max(38, style.typography.tickLabelFontSize * 3)
+      ? Math.max(38, tickLabelFontSize * 3)
       : 0);
   const yLabelSpace = style.yAxis.labelPosition.mode === "auto"
-    ? style.typography.axisLabelFontSize + 16
-    : style.yAxis.labelPosition.offsetPx + style.typography.axisLabelFontSize + 8;
+    ? axisLabelFontSize + 16
+    : style.yAxis.labelPosition.offsetPx + axisLabelFontSize + 8;
   const leftMargin = style.yAxis.visible
     ? style.yAxis.showLabel && style.yAxis.labelPosition.mode === "custom"
       ? Math.max(yOutsideContent, yLabelSpace)

@@ -22,29 +22,29 @@ export const FONT_FAMILY_PRESETS = {
 export type FontFamilyPreset = keyof typeof FONT_FAMILY_PRESETS;
 
 export const DEFAULT_TYPOGRAPHY: Readonly<TypographyStyle> = {
-  tickLabelFontSize: 12,
+  tickLabelFontSizePt: 9,
   tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
-  axisLabelFontSize: 14,
+  axisLabelFontSizePt: 10.5,
   axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
-  titleFontSize: 18,
+  titleFontSizePt: 13.5,
   titleFontFamily: FONT_FAMILY_PRESETS.sansSerif,
 };
 
 export const EXAM_TYPOGRAPHY: Readonly<TypographyStyle> = {
-  tickLabelFontSize: 12,
+  tickLabelFontSizePt: 9,
   tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
-  axisLabelFontSize: 14,
+  axisLabelFontSizePt: 10.5,
   axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
-  titleFontSize: 18,
+  titleFontSizePt: 13.5,
   titleFontFamily: FONT_FAMILY_PRESETS.sansSerif,
 };
 
 export const TEACHING_TYPOGRAPHY: Readonly<TypographyStyle> = {
-  tickLabelFontSize: 13,
+  tickLabelFontSizePt: 10,
   tickLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
-  axisLabelFontSize: 15,
+  axisLabelFontSizePt: 11,
   axisLabelFontFamily: FONT_FAMILY_PRESETS.sansSerif,
-  titleFontSize: 19,
+  titleFontSizePt: 14,
   titleFontFamily: FONT_FAMILY_PRESETS.sansSerif,
 };
 

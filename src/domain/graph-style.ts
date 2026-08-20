@@ -73,11 +73,11 @@ export interface TitleStyle {
 }
 
 export interface TypographyStyle {
-  tickLabelFontSize: number;
+  tickLabelFontSizePt: number;
   tickLabelFontFamily: string;
-  axisLabelFontSize: number;
+  axisLabelFontSizePt: number;
   axisLabelFontFamily: string;
-  titleFontSize: number;
+  titleFontSizePt: number;
   titleFontFamily: string;
 }
 

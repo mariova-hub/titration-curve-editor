@@ -104,7 +104,7 @@ npm run build
 - Previewと同一のSVG文字列を`image/svg+xml;charset=utf-8`のBlobとして保存するSVG Export
 - ユーザー向け表示を日本語へ統一したBrowser UI
 - 自由指定、1:1、4:3、3:2、16:9、任意比率に対応する縦横比設定と固定ON/OFF
-- 目盛り数値、軸ラベル、タイトルのfont sizeとfont-familyを独立調整するTypography controls
+- 目盛り数値、軸ラベル、タイトルのfont size（pt）とfont-familyを独立調整するTypography controls
 - Typographyに応じて文字切れを防ぐSVG plot margin計算
 - X/Y独立の目盛り線方向（外向き・内向き・両方向）
 - X/Y軸ラベルの自動・指定位置、軸上位置、軸からの距離調整
@@ -112,6 +112,8 @@ npm run build
 - ゴシック体・明朝体・MS ゴシック・MS Pゴシック・MS 明朝・MS P明朝・Century・sans-serif・serif・任意指定に対応するSVG `font-family`設定
 
 Centuryは英数字を優先し、日本語グリフには`"Yu Mincho"`、`"MS Mincho"`、`serif`の順でfallbackするstackを使用します。SVGへフォントファイル自体は埋め込みません。別のPCでSVGを開いた際に指定フォントが存在しない場合は、`font-family`に指定したfallbackまたは閲覧環境の代替フォントで表示されます。
+
+フォントサイズはMicrosoft Word等と同じpt単位で指定でき、0.5 pt刻みの入力に対応します。SVG内部のlayout計算では`1 pt = 4 / 3 CSS px相当`のuser unitへ換算します。Word上でSVG全体を拡大縮小した場合、文字も図とともに拡大縮小されます。
 
 定数値は試験問題・教材との整合を優先します。酢酸`Ka = 2.69e-5`、アンモニア`Kb = 2.3e-5`、シュウ酸`Ka1 = 9.12e-2`、`Ka2 = 1.51e-4`を高校教材用プロファイルとして採用し、NH4+のKaは同じ25 ℃のKwから導出しています。
 

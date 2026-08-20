@@ -27,6 +27,7 @@ import {
   resolveMajorTickInterval,
   resolveMinorTickInterval,
 } from "./ticks";
+import { ptToUserUnits } from "./units";
 import { escapeXml } from "./xml";
 
 interface AxisTickModel {
@@ -122,9 +123,9 @@ function validateStyle(style: GraphStyle): PlotArea {
   validateLineStyle(style.characteristicPoints.line, "characteristicPoints.line");
   validateMarkerStyle(style.equivalenceGuides.marker, "equivalenceGuides.marker");
   validateMarkerStyle(style.characteristicPoints.marker, "characteristicPoints.marker");
-  validatePositiveFinite(style.typography.tickLabelFontSize, "typography.tickLabelFontSize");
-  validatePositiveFinite(style.typography.axisLabelFontSize, "typography.axisLabelFontSize");
-  validatePositiveFinite(style.typography.titleFontSize, "typography.titleFontSize");
+  validatePositiveFinite(style.typography.tickLabelFontSizePt, "typography.tickLabelFontSizePt");
+  validatePositiveFinite(style.typography.axisLabelFontSizePt, "typography.axisLabelFontSizePt");
+  validatePositiveFinite(style.typography.titleFontSizePt, "typography.titleFontSizePt");
   for (const [label, fontFamily] of [
     ["typography.tickLabelFontFamily", style.typography.tickLabelFontFamily],
     ["typography.axisLabelFontFamily", style.typography.axisLabelFontFamily],
@@ -304,7 +305,8 @@ function renderAxis(
   if (axis.showMajorTicks) for (const value of tickModel.majorTicks) renderTick(value, true);
   if (axis.showMinorTicks) for (const value of tickModel.minorTicks) renderTick(value, false);
   if (axis.showTickLabels) {
-    const tickFontSize = style.typography.tickLabelFontSize;
+    const tickFontSizePt = style.typography.tickLabelFontSizePt;
+    const tickFontSize = ptToUserUnits(tickFontSizePt);
     const tickFontFamily = escapeXml(style.typography.tickLabelFontFamily);
     const outsideTickExtent = getOutsideTickExtent(axis);
     for (const value of tickModel.majorTicks) {
@@ -312,13 +314,14 @@ function renderAxis(
       const text = formatTickValue(value);
       labels.push(
         orientation === "x"
-          ? `<text data-role="tick-label" data-axis="x" data-value="${text}" x="${formatSvgNumber(transform.xToPx(value))}" y="${formatSvgNumber(plot.bottom + outsideTickExtent + tickFontSize + 5)}" text-anchor="middle" font-size="${formatSvgNumber(tickFontSize)}" font-family="${tickFontFamily}">${text}</text>`
-          : `<text data-role="tick-label" data-axis="y" data-value="${text}" x="${formatSvgNumber(plot.left - outsideTickExtent - 8)}" y="${formatSvgNumber(transform.yToPx(value) + tickFontSize / 3)}" text-anchor="end" font-size="${formatSvgNumber(tickFontSize)}" font-family="${tickFontFamily}">${text}</text>`,
+          ? `<text data-role="tick-label" data-axis="x" data-value="${text}" x="${formatSvgNumber(transform.xToPx(value))}" y="${formatSvgNumber(plot.bottom + outsideTickExtent + tickFontSize + 5)}" text-anchor="middle" font-size="${formatSvgNumber(tickFontSizePt)}pt" font-family="${tickFontFamily}">${text}</text>`
+          : `<text data-role="tick-label" data-axis="y" data-value="${text}" x="${formatSvgNumber(plot.left - outsideTickExtent - 8)}" y="${formatSvgNumber(transform.yToPx(value) + tickFontSize / 3)}" text-anchor="end" font-size="${formatSvgNumber(tickFontSizePt)}pt" font-family="${tickFontFamily}">${text}</text>`,
       );
     }
   }
   if (axis.showLabel) {
-    const axisFontSize = style.typography.axisLabelFontSize;
+    const axisFontSizePt = style.typography.axisLabelFontSizePt;
+    const axisFontSize = ptToUserUnits(axisFontSizePt);
     const axisFontFamily = escapeXml(style.typography.axisLabelFontFamily);
     const autoYLabelX = Math.max(18, axisFontSize + 4);
     const autoXLabelY = style.height - Math.max(12, axisFontSize * 0.25 + 6);
@@ -333,8 +336,8 @@ function renderAxis(
       : (plot.top + plot.bottom) / 2;
     labels.push(
       orientation === "x"
-        ? `<text data-role="axis-label" data-axis="x" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(xLabelX)}" y="${formatSvgNumber(xLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSize)}" font-family="${axisFontFamily}">${escapeXml(axis.label)}</text>`
-        : `<text data-role="axis-label" data-axis="y" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(yLabelX)}" y="${formatSvgNumber(yLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSize)}" font-family="${axisFontFamily}" transform="rotate(-90 ${formatSvgNumber(yLabelX)} ${formatSvgNumber(yLabelY)})">${escapeXml(axis.label)}</text>`,
+        ? `<text data-role="axis-label" data-axis="x" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(xLabelX)}" y="${formatSvgNumber(xLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSizePt)}pt" font-family="${axisFontFamily}">${escapeXml(axis.label)}</text>`
+        : `<text data-role="axis-label" data-axis="y" data-position-mode="${axis.labelPosition.mode}" x="${formatSvgNumber(yLabelX)}" y="${formatSvgNumber(yLabelY)}" text-anchor="middle" font-size="${formatSvgNumber(axisFontSizePt)}pt" font-family="${axisFontFamily}" transform="rotate(-90 ${formatSvgNumber(yLabelX)} ${formatSvgNumber(yLabelY)})">${escapeXml(axis.label)}</text>`,
     );
   }
   return {
@@ -369,8 +372,9 @@ export function renderTitrationSvg(result: TitrationResult, style: GraphStyle): 
   const curve = style.curve.visible
     ? `<g data-role="curve" clip-path="url(#${clipId})"><path data-role="titration-curve" data-source-point-count="${result.points.length}" d="${pathData}" fill="none" ${renderStrokeAttributes(style.curve)} /></g>`
     : "";
+  const titleFontSize = ptToUserUnits(style.typography.titleFontSizePt);
   const title = style.title.visible
-    ? `<text data-role="title" x="${formatSvgNumber(style.width / 2)}" y="${formatSvgNumber(Math.max(28, style.typography.titleFontSize + 8))}" text-anchor="middle" font-size="${formatSvgNumber(style.typography.titleFontSize)}" font-family="${escapeXml(style.typography.titleFontFamily)}">${escapeXml(style.title.text)}</text>`
+    ? `<text data-role="title" x="${formatSvgNumber(style.width / 2)}" y="${formatSvgNumber(Math.max(28, titleFontSize + 8))}" text-anchor="middle" font-size="${formatSvgNumber(style.typography.titleFontSizePt)}pt" font-family="${escapeXml(style.typography.titleFontFamily)}">${escapeXml(style.title.text)}</text>`
     : "";
   const labelContent = xAxis.labels + yAxis.labels + title;
   const labels = labelContent.length === 0 ? "" : `<g data-role="labels">${labelContent}</g>`;

@@ -10,6 +10,7 @@ import {
   FONT_FAMILY_PRESETS,
 } from "../../src/rendering/graph-styles";
 import { renderTitrationSvg } from "../../src/rendering/svg-renderer";
+import { ptToUserUnits } from "../../src/rendering/units";
 
 const result: TitrationResult = {
   points: [
@@ -120,8 +121,9 @@ describe("axis label positions", () => {
     const yLabel = axisLabel(svg, "y");
     expect(xLabel).toContain('data-position-mode="auto"');
     expect(attribute(xLabel, "x")).toBe((plot.left + plot.right) / 2);
-    expect(attribute(xLabel, "y")).toBe(style.height - Math.max(12, style.typography.axisLabelFontSize * 0.25 + 6));
-    expect(attribute(yLabel, "x")).toBe(Math.max(18, style.typography.axisLabelFontSize + 4));
+    const axisFontSize = ptToUserUnits(style.typography.axisLabelFontSizePt);
+    expect(attribute(xLabel, "y")).toBe(style.height - Math.max(12, axisFontSize * 0.25 + 6));
+    expect(attribute(yLabel, "x")).toBe(Math.max(18, axisFontSize + 4));
     expect(attribute(yLabel, "y")).toBe((plot.top + plot.bottom) / 2);
   });
 

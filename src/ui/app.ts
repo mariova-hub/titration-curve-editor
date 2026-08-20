@@ -306,15 +306,15 @@ export const APP_TEMPLATE = `
               <label for="tick-label-font-family-preset">目盛り数値のフォント</label>
               <select id="tick-label-font-family-preset">${fontPresetOptions()}</select>
               <label for="tick-label-font-family-custom">目盛り数値の任意フォント</label><input id="tick-label-font-family-custom" type="text" />
-              <label for="tick-label-font-size">目盛り数値サイズ <span>px</span></label><input id="tick-label-font-size" type="number" min="6" max="48" step="1" />
+              <label for="tick-label-font-size">目盛り数値サイズ <span>pt</span></label><input id="tick-label-font-size" type="number" min="6" max="48" step="0.5" />
               <label for="axis-label-font-family-preset">軸ラベルのフォント</label>
               <select id="axis-label-font-family-preset">${fontPresetOptions()}</select>
               <label for="axis-label-font-family-custom">軸ラベルの任意フォント</label><input id="axis-label-font-family-custom" type="text" />
-              <label for="axis-label-font-size">軸ラベルサイズ <span>px</span></label><input id="axis-label-font-size" type="number" min="6" max="48" step="1" />
+              <label for="axis-label-font-size">軸ラベルサイズ <span>pt</span></label><input id="axis-label-font-size" type="number" min="6" max="48" step="0.5" />
               <label for="title-font-family-preset">タイトルのフォント</label>
               <select id="title-font-family-preset">${fontPresetOptions()}</select>
               <label for="title-font-family-custom">タイトルの任意フォント</label><input id="title-font-family-custom" type="text" />
-              <label for="title-font-size">タイトルサイズ <span>px</span></label><input id="title-font-size" type="number" min="6" max="48" step="1" />
+              <label for="title-font-size">タイトルサイズ <span>pt</span></label><input id="title-font-size" type="number" min="6" max="48" step="0.5" />
             </div>
             <p class="control-help">SVGにフォントファイルは埋め込みません。別のPCに指定フォントがない場合は代替フォントで表示されます。</p>
           </div>
@@ -535,9 +535,9 @@ export function mountApp(root: HTMLElement): void {
     setValue(requiredElement<HTMLSelectElement>(root, "background"), style.background);
     setCheckbox(requiredElement<HTMLInputElement>(root, "title-visible"), style.title.visible);
     setValue(requiredElement<HTMLInputElement>(root, "title-text"), style.title.text);
-    setValue(requiredElement<HTMLInputElement>(root, "tick-label-font-size"), String(style.typography.tickLabelFontSize));
-    setValue(requiredElement<HTMLInputElement>(root, "axis-label-font-size"), String(style.typography.axisLabelFontSize));
-    setValue(requiredElement<HTMLInputElement>(root, "title-font-size"), String(style.typography.titleFontSize));
+    setValue(requiredElement<HTMLInputElement>(root, "tick-label-font-size"), String(style.typography.tickLabelFontSizePt));
+    setValue(requiredElement<HTMLInputElement>(root, "axis-label-font-size"), String(style.typography.axisLabelFontSizePt));
+    setValue(requiredElement<HTMLInputElement>(root, "title-font-size"), String(style.typography.titleFontSizePt));
     for (const { prefix, property } of TYPOGRAPHY_FONT_CONTROLS) {
       const fontFamily = style.typography[property];
       const fontPreset = identifyFontPreset(fontFamily);
@@ -732,17 +732,17 @@ export function mountApp(root: HTMLElement): void {
   bindSelect("background", (style, background) => ({ ...style, background: background as GraphStyle["background"] }));
   bindCheck("title-visible", (style, visible) => ({ ...style, title: { ...style.title, visible } }));
   bindText("title-text", (style, text) => ({ ...style, title: { ...style.title, text } }));
-  bindNumber("tick-label-font-size", (value) => value >= 6 && value <= 48, (style, tickLabelFontSize) => ({
+  bindNumber("tick-label-font-size", (value) => value >= 6 && value <= 48, (style, tickLabelFontSizePt) => ({
     ...style,
-    typography: { ...style.typography, tickLabelFontSize },
+    typography: { ...style.typography, tickLabelFontSizePt },
   }));
-  bindNumber("axis-label-font-size", (value) => value >= 6 && value <= 48, (style, axisLabelFontSize) => ({
+  bindNumber("axis-label-font-size", (value) => value >= 6 && value <= 48, (style, axisLabelFontSizePt) => ({
     ...style,
-    typography: { ...style.typography, axisLabelFontSize },
+    typography: { ...style.typography, axisLabelFontSizePt },
   }));
-  bindNumber("title-font-size", (value) => value >= 6 && value <= 48, (style, titleFontSize) => ({
+  bindNumber("title-font-size", (value) => value >= 6 && value <= 48, (style, titleFontSizePt) => ({
     ...style,
-    typography: { ...style.typography, titleFontSize },
+    typography: { ...style.typography, titleFontSizePt },
   }));
   for (const { prefix, property } of TYPOGRAPHY_FONT_CONTROLS) {
     const fontPreset = requiredElement<HTMLSelectElement>(root, `${prefix}-font-family-preset`);

@@ -9,9 +9,28 @@ import {
   generateMinorTicks,
   generateTicks,
 } from "../../src/rendering/ticks";
+import { ptToUserUnits, USER_UNITS_PER_POINT } from "../../src/rendering/units";
 import { escapeXml } from "../../src/rendering/xml";
 
 describe("rendering numeric utilities", () => {
+  it.each([
+    [1, 4 / 3],
+    [9, 12],
+    [10.5, 14],
+    [12, 16],
+  ])("converts %s pt to %s SVG user units", (pt, expected) => {
+    expect(ptToUserUnits(pt)).toBeCloseTo(expected, 12);
+  });
+
+  it("defines one centralized point conversion ratio", () => {
+    expect(USER_UNITS_PER_POINT).toBe(96 / 72);
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects invalid point size %s",
+    (pt) => expect(() => ptToUserUnits(pt)).toThrow(RangeError),
+  );
+
   it("generates major ticks from integer indexes without accumulation artifacts", () => {
     expect(generateTicks(0, 14, 2)).toEqual([0, 2, 4, 6, 8, 10, 12, 14]);
     expect(generateTicks(0, 10, 2.5)).toEqual([0, 2.5, 5, 7.5, 10]);

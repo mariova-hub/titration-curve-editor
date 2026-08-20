@@ -244,14 +244,14 @@ Preset適用後の個別変更は`presetOrigin`を履歴情報として残して
 - 縦横比presetは少なくとも自由、1:1、4:3、3:2、16:9を持つ。preset適用後も任意比率へ変更できる。
 - 固定ONではwidth変更に追従してheightを、height変更に追従してwidthを更新する。固定OFFではwidthとheightを独立に変更する。循環更新を起こさない。
 - SVG rootは指定width/heightとviewBoxを持つ。
-- plot marginはtitle、axis label、tick labelと各font sizeに応じ、文字が切れない値を描画モデルで決定する。
+- plot marginはtitle、axis label、tick labelのpt指定を`1 pt = 4 / 3` user unitへ換算し、文字が切れない値を描画モデルで決定する。
 - 極端に小さいfigure sizeでplot areaが正にならない場合はvalidation errorとする。
 - Preview表示のCSS縮小はSVG内部座標、線幅、Export寸法を変更しない。
 - backgroundは`white`または`transparent`。Examはwhite。
 
 ### 10.1 Typography
 
-`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeとfont familyを3系統で独立して保持する。各font sizeは正のfinite px値、各font familyは空でない文字列とし、renderer内へ固定font設定を残さない。ゴシック体、明朝体、MS系日本語フォント、sans-serif、serif、Century、任意指定を各系統のUIで提供し、属性値はXML escapeする。Century stackは`"Century", "Yu Mincho", "MS Mincho", serif`とし、英数字ではCenturyを優先し、日本語グリフは後続fontへfallbackする。Exam/Teaching presetは現行外観を維持するtypography初期値を明示し、適用後の個別変更を許可する。SVGへフォントファイルやweb fontを埋め込まず、別環境ではfallbackされることをUI/READMEへ明記する。font変更はcurve point、sampling、化学計算結果を変更しない。
+`GraphStyle`は、目盛り数値、X/Y軸ラベル、タイトルのfont sizeとfont familyを3系統で独立して保持する。各font size fieldは接尾辞`Pt`でpt単位を明示し、正のfinite値とする。UIは6〜48 pt、step 0.5を基本とし、SVG textの`font-size`属性には`pt`を付ける。layout/marginのみ共通utilityで`1 pt = 96 / 72 = 4 / 3` SVG user unitへ換算し、経験的な換算係数を追加しない。各font familyは空でない文字列とし、renderer内へ固定font設定を残さない。ゴシック体、明朝体、MS系日本語フォント、sans-serif、serif、Century、任意指定を各系統のUIで提供し、属性値はXML escapeする。Century stackは`"Century", "Yu Mincho", "MS Mincho", serif`とし、英数字ではCenturyを優先し、日本語グリフは後続fontへfallbackする。Exam presetは9 / 10.5 / 13.5 pt、Teaching presetは10 / 11 / 14 ptとし、適用後の個別変更を許可する。SVGへフォントファイルやweb fontを埋め込まず、別環境ではfallbackされることをUI/READMEへ明記する。font変更はcurve point、sampling、化学計算結果を変更しない。
 
 ## 11. Rendering pipeline
 
@@ -459,8 +459,9 @@ Vitestと、必要最小限のDOM環境を想定する。外観snapshotだけに
 
 ### 16.10 typography / 日本語UI
 
-- tick label、axis label、titleのfont sizeが個別にSVG textへ反映される
-- font size増加時に必要marginが増え、plotまたはSVG外で文字が切れない
+- tick label、axis label、titleのfont sizeがpt単位で個別にSVG textへ反映され、px表記を出力しない
+- 1 / 9 / 10.5 / 12 ptのuser unit換算とinvalid値rejectを検証する
+- 9 ptから18 ptへの増加時に必要marginが増え、plotまたはSVG外で文字が切れない
 - 非finiteまたは0以下のfont sizeをrendererがrejectする
 - typographyと縦横比の変更でcurve pointsが変わらず、Calculationを再実行しない
 - 主要Controls、preset、図のサイズ、出力操作が日本語で表示される
