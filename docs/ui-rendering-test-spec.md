@@ -357,6 +357,8 @@ render modelは少なくとも次を確定済み値として持つ。
 
 PNGはSVG出力をCanvas等へ描画して生成する。独立した座標計算、axis生成、curve描画を実装しない。
 
+`PngExportOptions`は`scale`と`background`を持つ。UIは1倍・2倍・4倍を提供し、既定は2倍とする。scaleはSVGの論理寸法やGraphStyleを変更せず、Canvas幅・高さだけへ乗算する。背景は`preserve`（SVG設定を使用）、`white`、`transparent`を扱う。transparent指定時はrendererが生成した背景rectだけをrasterize用SVGから除外し、white指定時は描画前にCanvasを白でfillする。
+
 推奨手順:
 
 1. 同一rendererのSVGをserializeする。
@@ -367,6 +369,8 @@ PNGはSVG出力をCanvas等へ描画して生成する。独立した座標計�
 6. Object URL等の一時resourceを解放する。
 
 transparent backgroundはPNG alphaとして保持し、whiteはSVG背景rectを含めた状態で変換する。変換失敗、tainted canvas、0寸法、非finite寸法を明示的なExport errorとして扱う。
+
+PNG MIMEは`image/png`、既定filenameは`titration-curve.png`とする。拡張子がなければ`.png`を補い、重複させない。Canvasは一辺16,384pxかつ総画素数100MP以下とし、通常の720×480・2倍と最大figure 2400×1800・4倍を許容する。document fontsのreadyを可能な範囲で待ってからImageへ読み込み、SVG読込用・PNG download用Object URLを成功・失敗双方で解放する。変換中は二重実行を防止し、stale Previewでは操作を無効化する。PNG失敗は日本語errorとして表示するが、SVG Exportを無効化しない。
 
 ## 15. PreviewとExportの一貫性
 
@@ -491,6 +495,9 @@ Renderingへ渡す前のcontract testとして、次を必須にする。詳細�
 - PreviewのCSS scale変更がExport SVGを変えない
 - PNG変換へ渡すSVG sourceがSVG Exportと同一内容である
 - PNG専用rendererまたは別座標生成経路が存在しないことをmodule境界テストまたはcode reviewで確認する
+- 1倍・2倍・4倍の寸法、background mode、PNG MIME、filename、Canvas上限、toBlob null、Object URL cleanupを検証する
+- PNG設定変更・PNG Exportでcurve point、Calculation呼出数、SVG renderer呼出数が変化しない
+- stale PreviewではPNG Exportを拒否し、多価系SVGも化学分岐なしで変換できる
 
 Canvasのpixel比較はブラウザ・font差の影響を受けるため、MVP自動テストではPNG Blob生成、MIME type、寸法、非空を中心に確認し、代表出力の目視確認を受入れ項目に加える。
 

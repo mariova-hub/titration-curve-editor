@@ -460,11 +460,15 @@ UIの標準表示言語は日本語とし、化学式、pH、SVG、PNG、mol/L�
 
 GraphStyle、座標変換、軸、少数目盛り、曲線、複数guideを含む純粋なSVG rendererを実装する。
 
-### Phase 5: UI/Presets/Export
+### Phase 5: UI/Presets/SVG Export
 
-左右レイアウト、入力、preset、Preview、SVG Export、SVG由来PNG Exportを統合する。
+左右レイアウト、入力、preset、Preview、SVG Exportを統合する。
 
-### Phase 6: 受入れ・文書化
+### Phase 6: PNG Export
+
+PreviewとSVG Exportが共有する現在のSVG文字列をImageへ読み込み、一時Canvasで1倍・2倍・4倍にrasterizeしてPNG Blobとして保存する。PNG専用renderer、化学再計算、SVG再描画は禁止する。背景はSVG設定維持、白、透明を扱い、Object URLを成功・失敗双方で解放する。Canvasは一辺16,384pxかつ100MP以下に制限する。
+
+### Phase 7: 受入れ・文書化
 
 全自動テスト、代表図版の目視確認、アクセシビリティの基本確認を行う。scaffoldと起動方法が確定した時点でREADMEと`.gitignore`を作成する。
 

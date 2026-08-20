@@ -244,6 +244,13 @@ label span, .control-help { color: #697681; font-weight: 500; }
   font-size: 0.78rem;
 }
 
+.export-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .status-message {
   margin: 0;
   color: #4e5c67;

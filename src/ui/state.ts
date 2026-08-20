@@ -3,6 +3,7 @@ import { calculateTitrationCurve } from "../calculation";
 import type { GraphStyle } from "../domain/graph-style";
 import type { TitrationInput, TitrationResult } from "../domain/titration";
 import { validateTitrationInput } from "../domain/validation";
+import type { PngBackgroundMode, PngExportOptions, PngExportScale } from "../export";
 import {
   applyExamPreset,
   applyTeachingPreset,
@@ -45,6 +46,7 @@ export interface RenderingState {
   error: UiError | null;
   xRangeMode: "auto" | "manual";
   aspectRatio: AspectRatioState;
+  pngExportOptions: PngExportOptions;
 }
 
 export type AspectRatioPreset = "free" | "1:1" | "4:3" | "3:2" | "16:9" | "custom";
@@ -94,6 +96,11 @@ const DEFAULT_ASPECT_RATIO: Readonly<AspectRatioState> = {
   heightRatioInput: "2",
   preset: "free",
   error: null,
+};
+
+export const DEFAULT_PNG_EXPORT_OPTIONS: Readonly<PngExportOptions> = {
+  scale: 2,
+  background: "preserve",
 };
 
 type DraftParseResult =
@@ -213,6 +220,7 @@ export function createAppState(
         error: null,
         xRangeMode: "auto",
         aspectRatio: { ...DEFAULT_ASPECT_RATIO },
+        pngExportOptions: { ...DEFAULT_PNG_EXPORT_OPTIONS },
       },
     };
   }
@@ -236,6 +244,7 @@ export function createAppState(
         error: rendered.error,
         xRangeMode: "auto",
         aspectRatio: { ...DEFAULT_ASPECT_RATIO },
+        pngExportOptions: { ...DEFAULT_PNG_EXPORT_OPTIONS },
       },
     };
   } catch (error) {
@@ -254,6 +263,7 @@ export function createAppState(
         error: null,
         xRangeMode: "auto",
         aspectRatio: { ...DEFAULT_ASPECT_RATIO },
+        pngExportOptions: { ...DEFAULT_PNG_EXPORT_OPTIONS },
       },
     };
   }
@@ -585,6 +595,23 @@ export function canExportSvg(state: AppState): boolean {
     !state.chemical.previewIsStale &&
     state.rendering.error === null &&
     state.rendering.svgString !== null;
+}
+
+export function canExportPng(state: AppState): boolean {
+  return canExportSvg(state);
+}
+
+export function updatePngExportOptions(
+  state: AppState,
+  update: Partial<{ scale: PngExportScale; background: PngBackgroundMode }>,
+): AppState {
+  return {
+    ...state,
+    rendering: {
+      ...state.rendering,
+      pngExportOptions: { ...state.rendering.pngExportOptions, ...update },
+    },
+  };
 }
 
 export function errorsForField(state: AppState, field: UiErrorField): UiError[] {

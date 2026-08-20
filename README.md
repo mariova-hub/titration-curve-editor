@@ -4,7 +4,7 @@
 
 ## 現在のPhase
 
-現在はPhase 5 Follow-up 2です。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をファイルとして保存できる実用最小構成まで実装しています。
+現在はPhase 6です。化学的に計算した滴定曲線を日本語UIで編集・プレビューし、同じSVG文字列をSVGまたはPNGとして保存できる実用構成まで実装しています。
 
 ## 技術構成
 
@@ -64,7 +64,7 @@ npm run build
 - [酸塩基平衡・計算仕様](./docs/calculation-spec.md)
 - [UI・描画・テスト仕様](./docs/ui-rendering-test-spec.md)
 
-## Phase 5までに実装済み
+## Phase 6までに実装済み
 
 - 多段階のprotonation speciesとdissociation stepを表すDomain Model
 - `complete`と`equilibrium`を区別する解離step
@@ -102,6 +102,9 @@ npm run build
 - curve、X/Y axes、range、major/minor ticks、grid、guide/marker、figure size、title/label controls
 - `renderTitrationSvg()`の出力を直接DOMへ表示するLive SVG Preview
 - Previewと同一のSVG文字列を`image/svg+xml;charset=utf-8`のBlobとして保存するSVG Export
+- Previewと同一のSVG文字列を一時CanvasでrasterizeするPNG Export
+- 1倍・2倍・4倍のPNG解像度（既定2倍）と、SVG設定・白・透明の背景選択
+- PNG変換・download双方の一時Object URL解放と、Canvas寸法・100MP安全上限validation
 - ユーザー向け表示を日本語へ統一したBrowser UI
 - 自由指定、1:1、4:3、3:2、16:9、任意比率に対応する縦横比設定と固定ON/OFF
 - 目盛り数値、軸ラベル、タイトルのfont size（pt）とfont-familyを独立調整するTypography controls
@@ -119,8 +122,7 @@ Centuryは英数字を優先し、日本語グリフには`"Yu Mincho"`、`"MS M
 
 ## 現在未実装の機能
 
-- PNG Export
-- Canvas / PDF出力
+- PDF出力
 - user presetや入力条件の永続化
 
-PNG Exportは次Phaseの対象です。Phase 5 Follow-up 2ではCanvasを使用せず、SVGプレビューとSVG書き出しだけを実装しています。
+PNGは現在のPCで利用可能なfontを使ってSVGをrasterizeします。font fileは埋め込まず、高倍率ほどファイルサイズと一時的なメモリ消費が増えます。CanvasはPNG生成中だけ使用し、Preview rendererには使用しません。

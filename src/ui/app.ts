@@ -5,7 +5,11 @@ import type {
   LinePattern,
   TickDirection,
 } from "../domain/graph-style";
-import { downloadSvg } from "../export";
+import {
+  downloadSvg,
+  type PngBackgroundMode,
+  type PngExportScale,
+} from "../export";
 import {
   calculateNiceTickInterval,
   FONT_FAMILY_PRESETS,
@@ -13,6 +17,7 @@ import {
 } from "../rendering";
 import {
   applyPresetToState,
+  canExportPng,
   canExportSvg,
   createAppState,
   errorsForField,
@@ -22,6 +27,7 @@ import {
   updateFigureHeight,
   updateFigureWidth,
   updateGraphStyle,
+  updatePngExportOptions,
   updateTitrationDraft,
   updateXMax,
   useAutomaticXRange,
@@ -30,6 +36,7 @@ import {
   type TitrationDraftField,
   type UiErrorField,
 } from "./state";
+import { exportPngFromState } from "./png-export-action";
 
 const PATTERNS: ReadonlyArray<{ value: LinePattern; label: string }> = [
   { value: "solid", label: "実線" },
@@ -323,10 +330,26 @@ export const APP_TEMPLATE = `
         <details open>
           <summary>出力</summary>
           <div class="section-content">
-            <label for="export-filename">ファイル名</label>
+            <label for="export-filename">SVGファイル名</label>
             <input id="export-filename" type="text" value="titration-curve.svg" />
             <button type="button" id="export-svg" class="primary-button">SVGを書き出す</button>
-            <p class="control-help">プレビューと同じSVG文字列を保存します。</p>
+            <label for="png-export-filename">PNGファイル名</label>
+            <input id="png-export-filename" type="text" value="titration-curve.png" />
+            <label for="png-export-scale">PNG出力倍率</label>
+            <select id="png-export-scale">
+              <option value="1">1倍</option>
+              <option value="2">2倍</option>
+              <option value="4">4倍</option>
+            </select>
+            <label for="png-export-background">PNG背景</label>
+            <select id="png-export-background">
+              <option value="preserve">SVG設定を使用</option>
+              <option value="white">白</option>
+              <option value="transparent">透明</option>
+            </select>
+            <button type="button" id="export-png" class="primary-button">PNGを書き出す</button>
+            <p id="error-png-export" class="field-error error-summary" role="alert"></p>
+            <p class="control-help">プレビューと同じSVG文字列から画像を生成します。高倍率ほどメモリとファイル容量を多く使用します。</p>
           </div>
         </details>
       </aside>
@@ -343,7 +366,10 @@ export const APP_TEMPLATE = `
         <div id="preview-canvas" class="preview-canvas" aria-label="滴定曲線のプレビュー"></div>
         <div class="preview-footer">
           <span id="point-summary"></span>
-          <button type="button" id="export-svg-footer" class="primary-button">SVGを書き出す</button>
+          <div class="export-button-row">
+            <button type="button" id="export-svg-footer" class="primary-button">SVGを書き出す</button>
+            <button type="button" id="export-png-footer" class="primary-button">PNGを書き出す</button>
+          </div>
         </div>
       </section>
     </main>
@@ -407,6 +433,12 @@ export function mountApp(root: HTMLElement): void {
     requiredElement<HTMLButtonElement>(root, "export-svg"),
     requiredElement<HTMLButtonElement>(root, "export-svg-footer"),
   ];
+  const pngExportButtons = [
+    requiredElement<HTMLButtonElement>(root, "export-png"),
+    requiredElement<HTMLButtonElement>(root, "export-png-footer"),
+  ];
+  let pngExportInProgress = false;
+  let pngExportError = "";
 
   const draftControls: ReadonlyArray<{
     id: string;
@@ -550,6 +582,20 @@ export function mountApp(root: HTMLElement): void {
     requiredElement<HTMLButtonElement>(root, "preset-teaching").setAttribute("aria-pressed", String(style.presetOrigin === "teaching"));
     const exportEnabled = canExportSvg(state);
     for (const button of exportButtons) button.disabled = !exportEnabled;
+    setValue(
+      requiredElement<HTMLSelectElement>(root, "png-export-scale"),
+      String(state.rendering.pngExportOptions.scale),
+    );
+    setValue(
+      requiredElement<HTMLSelectElement>(root, "png-export-background"),
+      state.rendering.pngExportOptions.background,
+    );
+    const pngExportEnabled = canExportPng(state) && !pngExportInProgress;
+    for (const button of pngExportButtons) {
+      button.disabled = !pngExportEnabled;
+      button.textContent = pngExportInProgress ? "PNGを生成中…" : "PNGを書き出す";
+    }
+    requiredElement<HTMLElement>(root, "error-png-export").textContent = pngExportError;
     requiredElement<HTMLElement>(root, "point-summary").textContent = result === null
       ? ""
       : `計算点 ${result.points.length}点 / 当量点 ${result.equivalencePoints.length}点`;
@@ -768,12 +814,41 @@ export function mountApp(root: HTMLElement): void {
     });
   }
 
+  requiredElement<HTMLSelectElement>(root, "png-export-scale").addEventListener("change", (event) => {
+    const scale = Number((event.currentTarget as HTMLSelectElement).value) as PngExportScale;
+    commit(updatePngExportOptions(state, { scale }));
+  });
+  requiredElement<HTMLSelectElement>(root, "png-export-background").addEventListener("change", (event) => {
+    const background = (event.currentTarget as HTMLSelectElement).value as PngBackgroundMode;
+    commit(updatePngExportOptions(state, { background }));
+  });
+
   const handleExport = (): void => {
     if (!canExportSvg(state) || state.rendering.svgString === null) return;
     const filename = requiredElement<HTMLInputElement>(root, "export-filename").value;
     downloadSvg(state.rendering.svgString, filename);
   };
   for (const button of exportButtons) button.addEventListener("click", handleExport);
+
+  const handlePngExport = async (): Promise<void> => {
+    if (pngExportInProgress || !canExportPng(state)) return;
+    pngExportInProgress = true;
+    pngExportError = "";
+    syncControls();
+    try {
+      const filename = requiredElement<HTMLInputElement>(root, "png-export-filename").value;
+      await exportPngFromState(state, filename);
+    } catch (error) {
+      console.error("PNG export failed.", error);
+      pngExportError = "PNG画像を生成できませんでした。設定と画像サイズを確認してください。";
+    } finally {
+      pngExportInProgress = false;
+      syncControls();
+    }
+  };
+  for (const button of pngExportButtons) {
+    button.addEventListener("click", () => void handlePngExport());
+  }
 
   syncControls();
 }
