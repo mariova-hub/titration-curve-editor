@@ -12,6 +12,8 @@ describe("chemical formula display formatting", () => {
     ["NH3", "NH₃"],
     ["CH3COOH", "CH₃COOH"],
     ["Ba(OH)2", "Ba(OH)₂"],
+    ["Na2CO3", "Na₂CO₃"],
+    ["NaHCO3", "NaHCO₃"],
     ["HCl", "HCl"],
   ])("formats %s as %s for UI display", (canonical, displayed) => {
     expect(formatChemicalFormulaForDisplay(canonical)).toBe(displayed);
@@ -35,6 +37,8 @@ describe("chemical formula display formatting", () => {
       "Ca(OH)2",
       "Ba(OH)2",
       "NH3",
+      "Na2CO3",
+      "NaHCO3",
     ]);
   });
 });

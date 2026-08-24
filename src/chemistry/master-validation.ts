@@ -1,8 +1,78 @@
 import type { Substance } from "../domain/chemistry";
+import { getFixedIonById } from "./fixed-ions";
 
 export interface MasterIntegrityError {
   substanceId: string;
   message: string;
+}
+
+function isPositiveFinite(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
+function validateDissolvedComposition(
+  substance: Substance,
+  errors: MasterIntegrityError[],
+): void {
+  const composition = substance.dissolvedComposition;
+  if (composition === undefined) return;
+
+  const family = substance.acidBaseModel.kind === "protonation-family"
+    ? substance.acidBaseModel.family
+    : undefined;
+  let formulaUnitCharge = 0;
+
+  for (const component of composition.familyComponents) {
+    if (!isPositiveFinite(component.stoichiometryPerFormulaUnit)) {
+      errors.push({
+        substanceId: substance.id,
+        message: `Invalid family coefficient: ${component.familyId}.`,
+      });
+    }
+    if (family?.id !== component.familyId) {
+      errors.push({
+        substanceId: substance.id,
+        message: `Unknown family reference: ${component.familyId}.`,
+      });
+      continue;
+    }
+    const initialSpecies = family.species.find(
+      ({ id }) => id === component.initialSpeciesId,
+    );
+    if (initialSpecies === undefined) {
+      errors.push({
+        substanceId: substance.id,
+        message: `Initial species is not in family ${component.familyId}: ${component.initialSpeciesId}.`,
+      });
+      continue;
+    }
+    formulaUnitCharge += initialSpecies.charge * component.stoichiometryPerFormulaUnit;
+  }
+
+  for (const component of composition.fixedIons) {
+    if (!isPositiveFinite(component.stoichiometryPerFormulaUnit)) {
+      errors.push({
+        substanceId: substance.id,
+        message: `Invalid fixed-ion coefficient: ${component.speciesId}.`,
+      });
+    }
+    const fixedIon = getFixedIonById(component.speciesId);
+    if (fixedIon === undefined) {
+      errors.push({
+        substanceId: substance.id,
+        message: `Unknown fixed-ion reference: ${component.speciesId}.`,
+      });
+      continue;
+    }
+    formulaUnitCharge += fixedIon.charge * component.stoichiometryPerFormulaUnit;
+  }
+
+  if (Math.abs(formulaUnitCharge) > 1e-12) {
+    errors.push({
+      substanceId: substance.id,
+      message: "Dissolved composition is not charge neutral per formula unit.",
+    });
+  }
 }
 
 export function validateSubstanceMaster(
@@ -20,6 +90,8 @@ export function validateSubstanceMaster(
     if (substance.provenance.status !== "reviewed") {
       errors.push({ substanceId: substance.id, message: "Substance provenance is not reviewed." });
     }
+
+    validateDissolvedComposition(substance, errors);
 
     const model = substance.acidBaseModel;
     if (model.kind === "strong-hydroxide") {

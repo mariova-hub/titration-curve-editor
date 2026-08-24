@@ -1,6 +1,13 @@
-import type { DissolvedComposition } from "./solution-composition";
+import type {
+  AcidBaseFamilyId,
+  DissolvedComposition,
+} from "./solution-composition";
 
 export type AcidBaseRole = "acid" | "base";
+export type SubstanceSelectionCategory =
+  | "acid"
+  | "base"
+  | "salt-or-amphiprotic";
 
 export interface ChemicalSpecies {
   id: string;
@@ -54,6 +61,7 @@ export type DissociationStep =
   | EquilibriumDissociationStep;
 
 export interface AcidBaseFamily {
+  id?: AcidBaseFamilyId;
   protonCount: number;
   species: ChemicalSpecies[];
   dissociationSteps: DissociationStep[];
@@ -96,8 +104,10 @@ export interface Substance {
   id: string;
   displayNameJa: string;
   formula: string;
+  /** @deprecated Pairing, direction, and solver decisions must not read this field. */
   roles: AcidBaseRole[];
   dissolvedComposition?: DissolvedComposition;
+  selectionCategory?: SubstanceSelectionCategory;
   acidBaseModel: SubstanceAcidBaseModel;
   provenance: SubstanceProvenance;
 }

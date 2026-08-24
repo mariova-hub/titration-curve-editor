@@ -33,8 +33,8 @@ function getStrongHydroxide(substanceId: string): StrongHydroxideModel {
 }
 
 describe("substance master", () => {
-  it("contains the twelve Phase 1 substances", () => {
-    expect(SUBSTANCES).toHaveLength(12);
+  it("contains the fourteen v1.1 substances", () => {
+    expect(SUBSTANCES).toHaveLength(14);
     expect(SUBSTANCES.map(({ formula }) => formula)).toEqual([
       "HCl",
       "HNO3",
@@ -48,6 +48,8 @@ describe("substance master", () => {
       "Ca(OH)2",
       "Ba(OH)2",
       "NH3",
+      "Na2CO3",
+      "NaHCO3",
     ]);
   });
 

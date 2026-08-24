@@ -9,6 +9,7 @@ import type {
   Substance,
 } from "../domain/chemistry";
 import { ACID_DISSOCIATION_CONSTANTS } from "./constants";
+import { SODIUM_FIXED_ION_ID } from "./fixed-ions";
 
 function createSpecies(
   id: string,
@@ -211,35 +212,88 @@ const oxalicAcid = createProtonationFamilySubstance({
   },
 });
 
+export const CARBONATE_FAMILY_ID = "carbonate";
+
+export const CARBONATE_FAMILY: AcidBaseFamily = {
+  id: CARBONATE_FAMILY_ID,
+  protonCount: 2,
+  species: [
+    createSpecies("h2co3.h2co3", "H2CO3", 0, 2),
+    createSpecies("h2co3.hco3", "HCO3-", -1, 1),
+    createSpecies("h2co3.co3", "CO3^2-", -2, 0),
+  ],
+  dissociationSteps: [
+    createEquilibriumStep(
+      "h2co3.step1",
+      1,
+      "h2co3.h2co3",
+      "h2co3.hco3",
+      ACID_DISSOCIATION_CONSTANTS.carbonicAcid1,
+    ),
+    createEquilibriumStep(
+      "h2co3.step2",
+      2,
+      "h2co3.hco3",
+      "h2co3.co3",
+      ACID_DISSOCIATION_CONSTANTS.carbonicAcid2,
+    ),
+  ],
+};
+
 const carbonicAcid = createProtonationFamilySubstance({
   id: "h2co3",
   displayNameJa: "炭酸",
   formula: "H2CO3",
   roles: ["acid"],
-  family: {
-    protonCount: 2,
-    species: [
-      createSpecies("h2co3.h2co3", "H2CO3", 0, 2),
-      createSpecies("h2co3.hco3", "HCO3-", -1, 1),
-      createSpecies("h2co3.co3", "CO3^2-", -2, 0),
+  family: CARBONATE_FAMILY,
+});
+
+const sodiumCarbonate = createProtonationFamilySubstance({
+  id: "na2co3",
+  displayNameJa: "炭酸ナトリウム",
+  formula: "Na2CO3",
+  roles: ["base"],
+  selectionCategory: "salt-or-amphiprotic",
+  dissolvedComposition: {
+    familyComponents: [
+      {
+        familyId: CARBONATE_FAMILY_ID,
+        initialSpeciesId: "h2co3.co3",
+        stoichiometryPerFormulaUnit: 1,
+      },
     ],
-    dissociationSteps: [
-      createEquilibriumStep(
-        "h2co3.step1",
-        1,
-        "h2co3.h2co3",
-        "h2co3.hco3",
-        ACID_DISSOCIATION_CONSTANTS.carbonicAcid1,
-      ),
-      createEquilibriumStep(
-        "h2co3.step2",
-        2,
-        "h2co3.hco3",
-        "h2co3.co3",
-        ACID_DISSOCIATION_CONSTANTS.carbonicAcid2,
-      ),
+    fixedIons: [
+      {
+        speciesId: SODIUM_FIXED_ION_ID,
+        stoichiometryPerFormulaUnit: 2,
+      },
     ],
   },
+  family: CARBONATE_FAMILY,
+});
+
+const sodiumHydrogenCarbonate = createProtonationFamilySubstance({
+  id: "nahco3",
+  displayNameJa: "炭酸水素ナトリウム",
+  formula: "NaHCO3",
+  roles: ["acid", "base"],
+  selectionCategory: "salt-or-amphiprotic",
+  dissolvedComposition: {
+    familyComponents: [
+      {
+        familyId: CARBONATE_FAMILY_ID,
+        initialSpeciesId: "h2co3.hco3",
+        stoichiometryPerFormulaUnit: 1,
+      },
+    ],
+    fixedIons: [
+      {
+        speciesId: SODIUM_FIXED_ION_ID,
+        stoichiometryPerFormulaUnit: 1,
+      },
+    ],
+  },
+  family: CARBONATE_FAMILY,
 });
 
 const phosphoricAcid = createProtonationFamilySubstance({
@@ -378,6 +432,8 @@ export const SUBSTANCES: readonly Substance[] = [
   calciumHydroxide,
   bariumHydroxide,
   ammonia,
+  sodiumCarbonate,
+  sodiumHydrogenCarbonate,
 ];
 
 const substanceById = new Map(
