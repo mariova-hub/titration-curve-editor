@@ -1,3 +1,5 @@
+import type { DissolvedComposition } from "./solution-composition";
+
 export type AcidBaseRole = "acid" | "base";
 
 export interface ChemicalSpecies {
@@ -95,6 +97,7 @@ export interface Substance {
   displayNameJa: string;
   formula: string;
   roles: AcidBaseRole[];
+  dissolvedComposition?: DissolvedComposition;
   acidBaseModel: SubstanceAcidBaseModel;
   provenance: SubstanceProvenance;
 }
