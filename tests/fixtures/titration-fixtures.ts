@@ -1,12 +1,33 @@
 import type { TitrationInput } from "../../src/domain/titration";
 
-export interface RegressionFixture {
+export interface TitrationFixture<TInput> {
   id: string;
   description: string;
-  input: TitrationInput;
-  equivalenceVolumesMl: number[];
+  input: TInput;
+  equivalenceVolumesMl: readonly number[];
   expectedPH: ReadonlyArray<{ volumeMl: number; pH: number }>;
 }
+
+export type RegressionFixture = TitrationFixture<TitrationInput>;
+
+export type CurveDirection = "ascending" | "descending";
+
+export interface V11PairingContract {
+  status: "supported";
+  basis: "derived-capability";
+  protonTransferDirection: "protonation" | "deprotonation";
+}
+
+export interface V11ContractFixture extends TitrationFixture<TitrationInput> {
+  characteristicVolumesMl: readonly number[];
+  expectedDirection: CurveDirection;
+  exactAnchorVolumesMl: readonly number[];
+  refinementTargetVolumesMl: readonly number[];
+  expectedEquivalenceGuideCount: number;
+  pairing: V11PairingContract;
+}
+
+export const V11_PH_TOLERANCE_DIGITS = 3;
 
 export const FIXTURES = {
   A: {
@@ -135,3 +156,89 @@ export const FIXTURES = {
     ],
   },
 } as const satisfies Record<string, RegressionFixture>;
+
+export const V11_CONTRACT_FIXTURES = {
+  H: {
+    id: "H",
+    description: "0.0500 mol/L Na2CO3 20.0 mL + 0.100 mol/L HCl",
+    input: {
+      analyteSubstanceId: "na2co3",
+      analyteConcentrationMolL: 0.05,
+      analyteVolumeMl: 20,
+      titrantSubstanceId: "hcl",
+      titrantConcentrationMolL: 0.1,
+    },
+    equivalenceVolumesMl: [10, 20],
+    characteristicVolumesMl: [5, 15],
+    expectedPH: [
+      { volumeMl: 0, pH: 11.5002912257 },
+      { volumeMl: 5, pH: 10.3210443569 },
+      { volumeMl: 10, pH: 8.3385863386 },
+      { volumeMl: 15, pH: 6.3498894298 },
+      { volumeMl: 20, pH: 3.9769474833 },
+    ],
+    expectedDirection: "descending",
+    exactAnchorVolumesMl: [5, 10, 15, 20],
+    refinementTargetVolumesMl: [10, 20],
+    expectedEquivalenceGuideCount: 2,
+    pairing: {
+      status: "supported",
+      basis: "derived-capability",
+      protonTransferDirection: "protonation",
+    },
+  },
+  I: {
+    id: "I",
+    description: "0.0500 mol/L NaHCO3 20.0 mL + 0.100 mol/L HCl",
+    input: {
+      analyteSubstanceId: "nahco3",
+      analyteConcentrationMolL: 0.05,
+      analyteVolumeMl: 20,
+      titrantSubstanceId: "hcl",
+      titrantConcentrationMolL: 0.1,
+    },
+    equivalenceVolumesMl: [10],
+    characteristicVolumesMl: [5],
+    expectedPH: [
+      { volumeMl: 0, pH: 8.339056533 },
+      { volumeMl: 5, pH: 6.3498820604 },
+      { volumeMl: 10, pH: 3.914355218 },
+    ],
+    expectedDirection: "descending",
+    exactAnchorVolumesMl: [5, 10],
+    refinementTargetVolumesMl: [10],
+    expectedEquivalenceGuideCount: 1,
+    pairing: {
+      status: "supported",
+      basis: "derived-capability",
+      protonTransferDirection: "protonation",
+    },
+  },
+  J: {
+    id: "J",
+    description: "0.0500 mol/L NaHCO3 20.0 mL + 0.100 mol/L NaOH",
+    input: {
+      analyteSubstanceId: "nahco3",
+      analyteConcentrationMolL: 0.05,
+      analyteVolumeMl: 20,
+      titrantSubstanceId: "naoh",
+      titrantConcentrationMolL: 0.1,
+    },
+    equivalenceVolumesMl: [10],
+    characteristicVolumesMl: [5],
+    expectedPH: [
+      { volumeMl: 0, pH: 8.339056533 },
+      { volumeMl: 5, pH: 10.3210443569 },
+      { volumeMl: 10, pH: 11.4090571928 },
+    ],
+    expectedDirection: "ascending",
+    exactAnchorVolumesMl: [5, 10],
+    refinementTargetVolumesMl: [10],
+    expectedEquivalenceGuideCount: 1,
+    pairing: {
+      status: "supported",
+      basis: "derived-capability",
+      protonTransferDirection: "deprotonation",
+    },
+  },
+} as const satisfies Record<"H" | "I" | "J", V11ContractFixture>;
