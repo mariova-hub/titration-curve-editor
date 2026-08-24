@@ -2,7 +2,7 @@
 
 - 文書状態: 実装前の正式UI/描画契約
 - 対象: UI / Rendering / Export / Rendering Test
-- 関連文書: [project-specification.md](./project-specification.md)、[calculation-spec.md](./calculation-spec.md)
+- 関連文書: [project-specification.md](./project-specification.md)、[calculation-spec.md](./calculation-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)
 
 ## 1. 目的
 
@@ -582,3 +582,17 @@ Canvasのpixel比較はブラウザ・font差の影響を受けるため、MVP�
 - 初回online読込後にoffline reloadし、滴定条件変更、curve再計算、SVG生成・download、PNG生成・downloadが動作することをproduction previewで確認する。
 - development modeではService Workerを無効にし、production previewでmanifest、registration、Cache Storage、subpath解決を検証する。
 - 自動テストとbuild検証はbase、manifest、icon、workflow構造、生成Service Worker、precache一覧、root-only URL不在を確認する。
+
+## 24. v1.1 塩・両性種のUI/描画契約
+
+v1.1の詳細は`v1.1-salt-titration-design.md`を正とし、既存Rendering/Export pipelineを変更しない。
+
+- Analyte/Titrant双方のselectへNa2CO3とNaHCO3を追加し、全14物質を各selectへ1回ずつ表示する。
+- UI表示groupに`塩・両性種`を加える。groupは表示専用で、pairing validationやsolver方向の根拠にしない。
+- canonical formula `Na2CO3` / `NaHCO3`を既存`formatChemicalFormulaForDisplay()`へ渡し、`Na₂CO₃` / `NaHCO₃`と表示する。
+- compatibilityはDomainのcomposition/capability resolverで判定し、NaHCO3 + HClとNaHCO3 + NaOHをともに受理する。UI独自の物質ID allowlistを作らない。
+- Fixture Hの下降型`CurvePoint[]`を変更せず描画し、Teaching SVG/PNGで10.0/20.0 mLの2本のequivalence guideを保持する。
+- Preview、SVG Export、PNG Exportは物質名を解釈せず、既存の単一rendererとSVG由来PNG経路を使用する。
+- Fixture Hの2 equivalence guides/markers、2 characteristic guides/markers、finite path、Preview/SVG/PNG一貫性を必須testへ加える。
+
+Na2CO3/NaHCO3追加を理由にpreset、axis、tick、typography、figure size、PWA、export仕様を変更しない。

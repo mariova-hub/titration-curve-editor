@@ -2,7 +2,7 @@
 
 - 文書状態: 実装前の正式計算契約
 - 対象: Chemistry / Calculation / Equivalence / Sampling
-- 関連文書: [project-specification.md](./project-specification.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)
+- 関連文書: [project-specification.md](./project-specification.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)
 
 ## 1. 目的
 
@@ -460,3 +460,18 @@ UI応答性のために計算をdebounceまたはworker化することは将来�
 - 表示桁を計算許容誤差に使うこと
 - 1つ目の当量点だけをsampling refinementすること
 - 正式出典未確認の定数をproduction masterまたはregression期待値へ入れること
+
+## 21. v1.1 composition compilerと塩滴定
+
+v1.1の追加計算契約は`v1.1-salt-titration-design.md`を正とする。既存計算式・定数・solver toleranceを変更せず、次を一般化する。
+
+- Substance 1 molから生成される初期family componentとfixed ion componentを明示し、両solutionを同じcompilerへ渡す。
+- family totalは投入時のspeciesにかかわらずmass balanceで保存し、既存species distributionで全プロトン化状態へ分配する。
+- Na2CO3はcarbonate family 1 mol（初期`CO3^2-`）とNa+ 2 mol、NaHCO3はcarbonate family 1 mol（初期`HCO3-`）とNa+ 1 molを与える。
+- 当量イベントは「最もプロトン化されたspeciesからのacid proton count」ではなく、initial speciesから滴定方向へたどる隣接stepの累積当量として列挙する。
+- pairing directionは手入力roleではなくcompositionから導出するproton-transfer capabilityで一意に解決し、曖昧系は推測せずunsupportedとする。
+- Fixture Hは10.0/20.0 mLの2当量点と5.0/15.0 mLの特徴点、Fixture I/Jは10.0 mLの当量点と5.0 mLの特徴点を持つ。
+- 全当量点・特徴点のpHを通常solverで求め、Fixture Hの両当量点周辺をadaptive samplingする。
+- carbonate totalを気相へ減少させず、CO2/H2CO3*を閉鎖系として扱う。
+
+v1.1追加tests、migration不変条件、当量step順序、実装Phaseは専用設計書のSections 12〜24に従う。

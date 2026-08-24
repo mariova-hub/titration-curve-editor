@@ -3,7 +3,7 @@
 - 文書状態: 実装前の設計契約
 - 対象リポジトリ: `titration-curve-editor`
 - 対象Phase: MVP設計・実装・受入れ
-- 関連文書: [calculation-spec.md](./calculation-spec.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)
+- 関連文書: [calculation-spec.md](./calculation-spec.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)
 
 ## 1. 文書の目的と優先順位
 
@@ -540,3 +540,17 @@ MVPの責務境界を維持したうえで、次を候補とする。
 5. fixtureと受入れ条件を更新した後に実装する。
 
 設計文書にない挙動を、テストなしの暗黙仕様として残してはならない。
+
+## 20. v1.1 塩・投入組成拡張
+
+v1.0.0のMVP契約を維持したまま、v1.1ではNa2CO3とNaHCO3を追加し、対象物質を14物質へ拡張する。詳細と優先されるv1.1契約は`v1.1-salt-titration-design.md`を正とする。
+
+- Substanceの名称・表示metadataと、水溶液へ投入されるfamily species/fixed ionのcompositionを分離する。
+- carbonate family、既存Ka、charge-balance/root solver、`EquivalencePoint[]`、`CharacteristicPoint[]`、adaptive sampling、SVG/PNG rendererを再利用する。
+- initial family speciesからプロトン供与・受容可能なstepを導出し、NaHCO3の両性を`acid`/`base`の単一UI分類へ縮退しない。
+- Analyte/Titrant双方を同じcomposition compilerへ渡し、物質名別・滴定方向別のsolverを作らない。
+- Fixture H（Na2CO3 + HCl、当量点10.0/20.0 mL）を主要acceptance scenario、Fixtures I/Jを追加正式fixtureとする。
+- carbonate系は`H2CO3* / HCO3- / CO3^2-`間に炭素が保存される閉鎖系とし、CO2気相散逸を扱わない。
+- Fixture A〜Gと既存12物質の計算・sampling・SVG・PNG結果をv1.0.0 regression契約として維持する。
+
+本節はv1.0.0の完成済みMVP範囲を遡及変更するものではない。v1.1実装完了まではREADME、Release Notes、package versionを変更しない。
