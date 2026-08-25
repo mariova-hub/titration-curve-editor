@@ -15,6 +15,7 @@ import type {
   StoichiometricCapacityContribution,
   SupportedProtonTransferPairing,
 } from "../domain/stoichiometry";
+import { calculatePHAtVolume } from "./titration-solver";
 
 export type StoichiometricPlanningErrorCode =
   | "invalid-input"
@@ -205,9 +206,11 @@ export function createEquivalencePointsFromBoundaryPlan(
 
 export function calculateCompositionEquivalencePoints(
   input: TitrationInput,
+  calculatePH: (volumeMl: number) => number = (volumeMl) =>
+    calculatePHAtVolume(input, volumeMl),
 ): EquivalencePoint[] {
   return createEquivalencePointsFromBoundaryPlan(
     planCompositionTitrationBoundaries(input),
     input.titrantConcentrationMolL,
-  );
+  ).map((point) => ({ ...point, pH: calculatePH(point.volumeMl) }));
 }

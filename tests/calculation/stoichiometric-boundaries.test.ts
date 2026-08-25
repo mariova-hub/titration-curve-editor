@@ -59,7 +59,7 @@ describe("v1.1 stoichiometric boundary planning", () => {
       2,
     ]);
     expect(new Set(points.map(({ volumeMl }) => volumeMl)).size).toBe(2);
-    expect(points.every(({ pH }) => pH === undefined)).toBe(true);
+    expect(points.every(({ pH }) => pH !== undefined && Number.isFinite(pH))).toBe(true);
   });
 
   it.each([
@@ -89,7 +89,7 @@ describe("v1.1 stoichiometric boundary planning", () => {
         stoichiometricEquivalent: 1,
         participatingStepIds: stepIds,
       });
-      expect(points[0]).not.toHaveProperty("pH");
+      expect(points[0]?.pH).toEqual(expect.any(Number));
     },
   );
 

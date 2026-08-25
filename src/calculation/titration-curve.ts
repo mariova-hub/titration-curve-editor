@@ -1,6 +1,8 @@
-import { SUBSTANCES } from "../chemistry/substances";
+import {
+  validateAnalyticalSystemInput,
+} from "../chemistry/chemical-system";
+import { getSubstanceById } from "../chemistry/substances";
 import type { TitrationInput, TitrationResult } from "../domain/titration";
-import { validateTitrationInput } from "../domain/validation";
 import {
   determineMaxVolumeMl,
   generateSamplingVolumes,
@@ -9,13 +11,14 @@ import {
 } from "../sampling";
 import { calculateEquivalencePoints, calculateHalfEquivalencePoints } from "./equivalence-points";
 import { CalculationError } from "./errors";
+import { calculateCompositionEquivalencePoints } from "./stoichiometric-boundaries";
 import { calculatePHAtVolume } from "./titration-solver";
 
 export function calculateTitrationCurve(
   input: TitrationInput,
   options: SamplingOptions = {},
 ): TitrationResult {
-  const validation = validateTitrationInput(input, SUBSTANCES);
+  const validation = validateAnalyticalSystemInput(input);
   if (!validation.valid) {
     throw new CalculationError(
       "invalid-input",
@@ -36,7 +39,10 @@ export function calculateTitrationCurve(
     return pH;
   };
 
-  const equivalencePoints = calculateEquivalencePoints(input, calculateOnce);
+  const analyte = getSubstanceById(input.analyteSubstanceId);
+  const equivalencePoints = analyte?.dissolvedComposition === undefined
+    ? calculateEquivalencePoints(input, calculateOnce)
+    : calculateCompositionEquivalencePoints(input, calculateOnce);
   const characteristicPoints = calculateHalfEquivalencePoints(
     input,
     equivalencePoints,

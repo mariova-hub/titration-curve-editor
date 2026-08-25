@@ -9,6 +9,15 @@ export type ValidationErrorCode =
   | "incompatible-acid-base-pair"
   | "ambiguous-proton-transfer-direction";
 
+export type PairingValidationErrorCode =
+  | "incompatible-acid-base-pair"
+  | "ambiguous-proton-transfer-direction";
+
+export type SubstancePairValidator = (
+  analyte: Substance,
+  titrant: Substance,
+) => PairingValidationErrorCode | undefined;
+
 export type ValidationField = keyof TitrationInput | "substancePair";
 
 export interface ValidationError {
@@ -60,6 +69,7 @@ function formsAcidBasePair(analyte: Substance, titrant: Substance): boolean {
 export function validateTitrationInput(
   input: TitrationInput,
   substances: readonly Substance[],
+  validateSubstancePair?: SubstancePairValidator,
 ): ValidationResult {
   const errors: ValidationError[] = [];
 
@@ -114,16 +124,21 @@ export function validateTitrationInput(
       field: "substancePair",
       message: "滴定される水溶液と滴下する水溶液には、異なる物質を指定してください。",
     });
-  } else if (
-    analyte !== undefined &&
-    titrant !== undefined &&
-    !formsAcidBasePair(analyte, titrant)
-  ) {
-    errors.push({
-      code: "incompatible-acid-base-pair",
-      field: "substancePair",
-      message: "滴定される水溶液と滴下する水溶液には、酸と塩基の組み合わせを指定してください。",
-    });
+  } else if (analyte !== undefined && titrant !== undefined) {
+    const pairErrorCode = validateSubstancePair === undefined
+      ? formsAcidBasePair(analyte, titrant)
+        ? undefined
+        : "incompatible-acid-base-pair"
+      : validateSubstancePair(analyte, titrant);
+    if (pairErrorCode !== undefined) {
+      errors.push({
+        code: pairErrorCode,
+        field: "substancePair",
+        message: pairErrorCode === "ambiguous-proton-transfer-direction"
+          ? "プロトン移動方向を一意に決定できません。"
+          : "滴定される水溶液と滴下する水溶液には、酸と塩基の組み合わせを指定してください。",
+      });
+    }
   }
 
   return errors.length === 0

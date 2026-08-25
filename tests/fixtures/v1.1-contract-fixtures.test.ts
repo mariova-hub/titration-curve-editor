@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateCompositionEquivalencePoints } from "../../src/calculation/stoichiometric-boundaries";
+import {
+  calculateCompositionEquivalencePoints,
+  calculateHalfEquivalencePoints,
+  calculatePHAtVolume,
+} from "../../src/calculation";
 import { resolveSubstanceProtonTransferPairing } from "../../src/chemistry/proton-transfer";
 import { getSubstanceById } from "../../src/chemistry/substances";
 import {
@@ -142,9 +146,31 @@ describe("v1.1 Phase 1 contract fixtures H-J", () => {
 });
 
 describe("v1.1 production integration contracts (Phase 2 and later)", () => {
-  it.todo("connect H-J golden pH and characteristic contracts to the solver");
   it.todo("connect H's exact anchors and both refinement targets to adaptive sampling");
   it.todo("connect H-J equivalence-guide counts to rendering and export output");
+
+  it.each(Object.values(V11_CONTRACT_FIXTURES))(
+    "connects Fixture $id golden pH and characteristic volumes to the solver",
+    (fixture) => {
+      for (const { volumeMl, pH } of fixture.expectedPH) {
+        expect(calculatePHAtVolume(fixture.input, volumeMl)).toBeCloseTo(
+          pH,
+          V11_PH_TOLERANCE_DIGITS,
+        );
+      }
+
+      const equivalencePoints = calculateCompositionEquivalencePoints(
+        fixture.input,
+      );
+      const characteristicPoints = calculateHalfEquivalencePoints(
+        fixture.input,
+        equivalencePoints,
+      );
+      expect(characteristicPoints.map(({ volumeMl }) => volumeMl)).toEqual(
+        fixture.characteristicVolumesMl,
+      );
+    },
+  );
 
   it.each(Object.values(V11_CONTRACT_FIXTURES))(
     "connects Fixture $id equivalence volumes to boundary-based production planning",
