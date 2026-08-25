@@ -475,3 +475,16 @@ v1.1の追加計算契約は`v1.1-salt-titration-design.md`を正とする。既
 - carbonate totalを気相へ減少させず、CO2/H2CO3*を閉鎖系として扱う。
 
 v1.1追加tests、migration不変条件、当量step順序、実装Phaseは専用設計書のSections 12〜24に従う。
+
+## 22. v1.2 mixed analyte計算契約
+
+v1.2 mixed-analyte計算の詳細は`v1.2-mixed-analyte-titration-design.md`を正とする。Fixture Kは20.0 mL中Na2CO3 0.0500 mol/LとNaOH 0.0250 mol/L、Titrant HCl 0.100 mol/Lとし、solution-level contribution集約から15.0/25.0 mLの境界を生成する。
+
+- strong-hydroxide capacityとcarbonate最初のprotonation contributionをstage 1へgroupし、2段目はcarbonate次stepとする。
+- stage groupingをcomponent-local step index、substance ID、Fixture Kの固定体積で決めない。
+- NaOH由来Na+はmixed composition内でcanonical `ion.na`へ集約し、OH-はKwとcharge balanceから求める。
+- `initialSpeciesId`を平衡濃度へ固定せず、全滴下体積でsolution-level totalから通常species distribution/root solverを実行する。
+- initial内部中和または未解決stage alignmentを要するmixed systemは推測せず明示errorとする。
+- 既存equivalence/characteristic arraysとadaptive samplingを再利用し、mixed専用solverを設けない。
+
+v1.0 Fixtures A〜Gおよびv1.1 Fixtures H〜Jの計算、reverse direction、sampling結果はv1.2でもregression契約である。

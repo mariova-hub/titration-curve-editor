@@ -596,3 +596,16 @@ v1.1の詳細は`v1.1-salt-titration-design.md`を正とし、既存Rendering/Ex
 - Fixture Hの2 equivalence guides/markers、2 characteristic guides/markers、finite path、Preview/SVG/PNG一貫性を必須testへ加える。
 
 Na2CO3/NaHCO3追加を理由にpreset、axis、tick、typography、figure size、PWA、export仕様を変更しない。
+
+## 25. v1.2 mixed analyte UI/描画契約
+
+v1.2 mixed-analyte UIとFixture Kの詳細は`v1.2-mixed-analyte-titration-design.md`を正とする。
+
+- 分析溶液は共通volumeと成分別concentrationで入力し、default 1行、「分析物質を追加」で2行目を表示する。
+- UI上限は2成分、Titrantは1成分とし、stock mixingや任意成分editorを導入しない。
+- 追加/削除、duplicate substance、行別error、追加順、`Na2CO3 0.0500 M + NaOH 0.0250 M in 20.0 mL`相当のsummaryをtestする。
+- 1成分時の既存操作、tab flow、validation、Preview/Exportを優先して維持する。
+- Fixture Kの7.5/20.0 mL characteristic anchors、15.0/25.0 mL equivalence anchors、両当量近傍sampling、重複なし、finite curveを確認する。
+- Preview/SVG/PNGは既存rendererを共有し、2本のequivalence guideを保持する。mixed専用rendererまたはPNG経路を作らない。
+
+Fixtures A〜JのUI、auto range、multi-guide、SVG、PNG、reverse directionはv1.2 regression gateとする。

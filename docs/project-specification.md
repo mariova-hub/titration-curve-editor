@@ -554,3 +554,14 @@ v1.0.0のMVP契約を維持したまま、v1.1ではNa2CO3とNaHCO3を追加し�
 - Fixture A〜Gと既存12物質の計算・sampling・SVG・PNG結果をv1.0.0 regression契約として維持する。
 
 本節はv1.0.0の完成済みMVP範囲を遡及変更するものではない。v1.1実装完了まではREADME、Release Notes、package versionを変更しない。
+
+## 21. v1.2 mixed analyte拡張
+
+v1.2では、Na2CO3とNaOHを共通体積の分析溶液へ濃度指定し、単一HClで滴定するFixture Kを正式scopeとする。入力、composition migration、stage grouping、validation、Fixture K、実装Phaseのsingle source of truthは`v1.2-mixed-analyte-titration-design.md`とする。
+
+- UIはdefault 1成分、追加時2成分までとするが、domain/compilerの配列を2件へ固定しない。
+- 初期内部中和を要せず、同一滴定方向で、stage topologyを一意に解決できるmixed classだけを受理する。
+- mixed専用solver/rendererを作らず、既存composition compiler、equilibrium solver、sampling、SVG/PNG pipelineを再利用する。
+- v1.0 Fixtures A〜Gとv1.1 Fixtures H〜Jを完全regression gateとする。
+
+本節はv1.2の実装開始を意味しない。設計Phaseではproduction/test/release artifactを変更しない。
