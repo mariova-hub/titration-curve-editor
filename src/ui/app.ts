@@ -1,4 +1,3 @@
-import { SUBSTANCES } from "../chemistry";
 import type {
   AxisLabelOrientation,
   AxisStyle,
@@ -38,7 +37,7 @@ import {
   type UiErrorField,
 } from "./state";
 import { exportPngFromState } from "./png-export-action";
-import { formatChemicalFormulaForDisplay } from "./chemical-formula";
+import { createSubstanceSelectionGroups } from "./substance-options";
 
 const PATTERNS: ReadonlyArray<{ value: LinePattern; label: string }> = [
   { value: "solid", label: "実線" },
@@ -400,13 +399,13 @@ function setCheckbox(element: HTMLInputElement, checked: boolean): void {
 
 function populateSubstances(select: HTMLSelectElement): void {
   select.replaceChildren();
-  for (const role of ["acid", "base"] as const) {
+  for (const selectionGroup of createSubstanceSelectionGroups()) {
     const group = document.createElement("optgroup");
-    group.label = role === "acid" ? "酸" : "塩基";
-    for (const substance of SUBSTANCES.filter(({ roles }) => roles.includes(role))) {
+    group.label = selectionGroup.label;
+    for (const substance of selectionGroup.options) {
       const option = document.createElement("option");
       option.value = substance.id;
-      option.textContent = `${substance.displayNameJa} (${formatChemicalFormulaForDisplay(substance.formula)})`;
+      option.textContent = substance.label;
       group.append(option);
     }
     select.append(group);

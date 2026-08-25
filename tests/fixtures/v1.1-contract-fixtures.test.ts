@@ -6,6 +6,11 @@ import {
   calculatePHAtVolume,
   calculateTitrationCurve,
 } from "../../src/calculation";
+import { createSvgExportArtifact } from "../../src/export";
+import {
+  createTeachingGraphStyle,
+  renderTitrationSvg,
+} from "../../src/rendering";
 import { resolveSubstanceProtonTransferPairing } from "../../src/chemistry/proton-transfer";
 import { getSubstanceById } from "../../src/chemistry/substances";
 import {
@@ -147,7 +152,24 @@ describe("v1.1 Phase 1 contract fixtures H-J", () => {
 });
 
 describe("v1.1 production integration contracts (Phase 2 and later)", () => {
-  it.todo("connect H-J equivalence-guide counts to rendering and export output");
+  it.each(Object.values(V11_CONTRACT_FIXTURES))(
+    "connects Fixture $id equivalence-guide counts to rendering and SVG export",
+    async (fixture) => {
+      const result = calculateTitrationCurve(fixture.input);
+      const xMax = result.points.at(-1)?.addedVolumeMl;
+      if (xMax === undefined) throw new Error("Missing curve endpoint.");
+      const svg = renderTitrationSvg(
+        result,
+        createTeachingGraphStyle(xMax),
+      );
+      const artifact = createSvgExportArtifact(svg, `fixture-${fixture.id}`);
+      const exportedSvg = await artifact.blob.text();
+
+      expect(
+        exportedSvg.match(/data-role="equivalence-guide"/g),
+      ).toHaveLength(fixture.expectedEquivalenceGuideCount);
+    },
+  );
 
   it("connects Fixture H exact anchors and both refinement targets to adaptive sampling", () => {
     const fixture = V11_CONTRACT_FIXTURES.H;

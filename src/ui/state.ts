@@ -1,8 +1,8 @@
-import { SUBSTANCES } from "../chemistry";
+import { validateAnalyticalSystemInput } from "../chemistry";
 import { calculateTitrationCurve } from "../calculation";
 import type { GraphStyle } from "../domain/graph-style";
 import type { TitrationInput, TitrationResult } from "../domain/titration";
-import { validateTitrationInput } from "../domain/validation";
+import type { ValidationError } from "../domain/validation";
 import type { PngBackgroundMode, PngExportOptions, PngExportScale } from "../export";
 import {
   applyExamPreset,
@@ -107,6 +107,12 @@ type DraftParseResult =
   | { ok: true; input: TitrationInput }
   | { ok: false; errors: UiError[] };
 
+export function toUiValidationErrors(
+  errors: readonly ValidationError[],
+): UiError[] {
+  return errors.map(({ code, field, message }) => ({ code, field, message }));
+}
+
 const NUMERIC_FIELDS: ReadonlyArray<{
   field: "analyteConcentrationMolL" | "analyteVolumeMl" | "titrantConcentrationMolL";
   label: string;
@@ -143,11 +149,11 @@ function parseDraft(draft: TitrationDraft): DraftParseResult {
     titrantSubstanceId: draft.titrantSubstanceId,
     titrantConcentrationMolL: parsedValues.titrantConcentrationMolL ?? Number.NaN,
   };
-  const validation = validateTitrationInput(input, SUBSTANCES);
+  const validation = validateAnalyticalSystemInput(input);
   if (!validation.valid) {
     return {
       ok: false,
-      errors: validation.errors.map(({ code, field, message }) => ({ code, field, message })),
+      errors: toUiValidationErrors(validation.errors),
     };
   }
   return { ok: true, input };
