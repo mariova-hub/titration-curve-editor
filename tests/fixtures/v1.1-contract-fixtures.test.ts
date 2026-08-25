@@ -4,6 +4,7 @@ import {
   calculateCompositionEquivalencePoints,
   calculateHalfEquivalencePoints,
   calculatePHAtVolume,
+  calculateTitrationCurve,
 } from "../../src/calculation";
 import { resolveSubstanceProtonTransferPairing } from "../../src/chemistry/proton-transfer";
 import { getSubstanceById } from "../../src/chemistry/substances";
@@ -146,8 +147,24 @@ describe("v1.1 Phase 1 contract fixtures H-J", () => {
 });
 
 describe("v1.1 production integration contracts (Phase 2 and later)", () => {
-  it.todo("connect H's exact anchors and both refinement targets to adaptive sampling");
   it.todo("connect H-J equivalence-guide counts to rendering and export output");
+
+  it("connects Fixture H exact anchors and both refinement targets to adaptive sampling", () => {
+    const fixture = V11_CONTRACT_FIXTURES.H;
+    const result = calculateTitrationCurve(fixture.input);
+    const sampledVolumes = result.points.map(({ addedVolumeMl }) => addedVolumeMl);
+
+    for (const anchor of fixture.exactAnchorVolumesMl) {
+      expect(sampledVolumes.filter((volumeMl) => volumeMl === anchor)).toHaveLength(1);
+    }
+    for (const target of fixture.refinementTargetVolumesMl) {
+      expect(
+        sampledVolumes.filter(
+          (volumeMl) => volumeMl >= target - 0.5 && volumeMl <= target + 0.5,
+        ).length,
+      ).toBeGreaterThan(30);
+    }
+  });
 
   it.each(Object.values(V11_CONTRACT_FIXTURES))(
     "connects Fixture $id golden pH and characteristic volumes to the solver",

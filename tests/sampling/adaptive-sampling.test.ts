@@ -37,6 +37,7 @@ describe("adaptive sampling volume generation", () => {
     expectValidVolumes(volumes, 37.5);
     for (const point of [...equivalencePoints, ...characteristicPoints]) {
       expect(volumes).toContain(point.volumeMl);
+      expect(volumes.filter((volume) => volume === point.volumeMl)).toHaveLength(1);
     }
     for (const target of [10, 20, 30]) {
       expect(countInWindow(volumes, target, 0.5)).toBeGreaterThan(30);
