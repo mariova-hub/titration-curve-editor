@@ -443,3 +443,17 @@ const substanceById = new Map(
 export function getSubstanceById(id: string): Substance | undefined {
   return substanceById.get(id);
 }
+
+const acidBaseFamilyById = new Map(
+  SUBSTANCES.flatMap((substance) => {
+    if (substance.acidBaseModel.kind !== "protonation-family") return [];
+    const family = substance.acidBaseModel.family;
+    return family.id === undefined ? [] : ([[family.id, family]] as const);
+  }),
+);
+
+export function getAcidBaseFamilyById(
+  id: string,
+): AcidBaseFamily | undefined {
+  return acidBaseFamilyById.get(id);
+}

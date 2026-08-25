@@ -6,7 +6,8 @@ export type ValidationErrorCode =
   | "non-positive-number"
   | "same-substance"
   | "unknown-substance"
-  | "incompatible-acid-base-pair";
+  | "incompatible-acid-base-pair"
+  | "ambiguous-proton-transfer-direction";
 
 export type ValidationField = keyof TitrationInput | "substancePair";
 

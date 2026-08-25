@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { calculateCompositionEquivalencePoints } from "../../src/calculation/stoichiometric-boundaries";
+import { resolveSubstanceProtonTransferPairing } from "../../src/chemistry/proton-transfer";
+import { getSubstanceById } from "../../src/chemistry/substances";
 import {
   V11_CONTRACT_FIXTURES,
   V11_PH_TOLERANCE_DIGITS,
@@ -139,8 +142,37 @@ describe("v1.1 Phase 1 contract fixtures H-J", () => {
 });
 
 describe("v1.1 production integration contracts (Phase 2 and later)", () => {
-  it.todo("connect H-J golden pH, direction, equivalence, and characteristic contracts to the solver");
+  it.todo("connect H-J golden pH and characteristic contracts to the solver");
   it.todo("connect H's exact anchors and both refinement targets to adaptive sampling");
   it.todo("connect H-J equivalence-guide counts to rendering and export output");
-  it.todo("connect H-J supported pairings to initial-species-derived capability validation");
+
+  it.each(Object.values(V11_CONTRACT_FIXTURES))(
+    "connects Fixture $id equivalence volumes to boundary-based production planning",
+    (fixture) => {
+      const points = calculateCompositionEquivalencePoints(fixture.input);
+
+      expect(points.map(({ volumeMl }) => volumeMl)).toEqual(
+        fixture.equivalenceVolumesMl,
+      );
+      expect(points).toHaveLength(fixture.equivalenceVolumesMl.length);
+    },
+  );
+
+  it.each(Object.values(V11_CONTRACT_FIXTURES))(
+    "connects Fixture $id to initial-species-derived capability validation",
+    (fixture) => {
+      const analyte = getSubstanceById(fixture.input.analyteSubstanceId);
+      const titrant = getSubstanceById(fixture.input.titrantSubstanceId);
+      expect(analyte).toBeDefined();
+      expect(titrant).toBeDefined();
+      if (analyte === undefined || titrant === undefined) return;
+
+      const result = resolveSubstanceProtonTransferPairing(analyte, titrant);
+      expect(result.status).toBe("supported");
+      if (result.status !== "supported") return;
+      expect(result.direction).toBe(
+        fixture.pairing.protonTransferDirection,
+      );
+    },
+  );
 });
