@@ -5,4 +5,5 @@ export * from "./fixed-ions";
 export * from "./master-validation";
 export * from "./proton-transfer";
 export * from "./species-distribution";
+export * from "./solution-titration-input";
 export * from "./substances";

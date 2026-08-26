@@ -1,5 +1,6 @@
 export type CalculationErrorCode =
   | "invalid-input"
+  | "unsupported-mixed-analyte-calculation"
   | "non-finite-residual"
   | "bracket-failure"
   | "convergence-failure";

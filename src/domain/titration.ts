@@ -6,6 +6,31 @@ export interface TitrationInput {
   titrantConcentrationMolL: number;
 }
 
+export interface AnalyteComponentInput {
+  componentId: string;
+  substanceId: string;
+  concentrationMolL: number;
+}
+
+export interface AnalyteSolutionInput {
+  totalVolumeMl: number;
+  components: readonly AnalyteComponentInput[];
+}
+
+export interface SolutionTitrationInput {
+  analyteSolution: AnalyteSolutionInput;
+  titrantSubstanceId: string;
+  titrantConcentrationMolL: number;
+}
+
+export type TitrationCurveInput = TitrationInput | SolutionTitrationInput;
+
+export function isSolutionTitrationInput(
+  input: TitrationCurveInput,
+): input is SolutionTitrationInput {
+  return "analyteSolution" in input;
+}
+
 export interface EquivalencePoint {
   id: string;
   order: number;

@@ -1,8 +1,14 @@
 import {
   validateAnalyticalSystemInput,
 } from "../chemistry/chemical-system";
+import { validateSolutionTitrationInput } from "../chemistry/solution-titration-input";
 import { getSubstanceById } from "../chemistry/substances";
-import type { TitrationInput, TitrationResult } from "../domain/titration";
+import {
+  isSolutionTitrationInput,
+  type TitrationCurveInput,
+  type TitrationInput,
+  type TitrationResult,
+} from "../domain/titration";
 import {
   determineMaxVolumeMl,
   generateSamplingVolumes,
@@ -14,7 +20,7 @@ import { CalculationError } from "./errors";
 import { calculateCompositionEquivalencePoints } from "./stoichiometric-boundaries";
 import { calculatePHAtVolume } from "./titration-solver";
 
-export function calculateTitrationCurve(
+function calculateSingleAnalyteTitrationCurve(
   input: TitrationInput,
   options: SamplingOptions = {},
 ): TitrationResult {
@@ -61,4 +67,26 @@ export function calculateTitrationCurve(
   }));
 
   return { equivalencePoints, characteristicPoints, points };
+}
+
+export function calculateTitrationCurve<TInput extends TitrationCurveInput>(
+  input: TInput,
+  options: SamplingOptions = {},
+): TitrationResult {
+  if (!isSolutionTitrationInput(input)) {
+    return calculateSingleAnalyteTitrationCurve(input, options);
+  }
+
+  const validation = validateSolutionTitrationInput(input);
+  if (!validation.valid) {
+    throw new CalculationError(
+      "invalid-input",
+      validation.errors[0].message,
+    );
+  }
+
+  throw new CalculationError(
+    "unsupported-mixed-analyte-calculation",
+    "混合分析溶液の曲線計算は後続Phaseで接続されます。",
+  );
 }

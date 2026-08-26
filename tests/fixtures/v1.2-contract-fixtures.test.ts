@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  normalizeSolutionTitrationInput,
+  validateSolutionTitrationInput,
+} from "../../src/chemistry";
+
+import {
   V11_PH_TOLERANCE_DIGITS,
   V12_ACCESSIBILITY_CONTRACT,
   V12_API_CONTRACT,
@@ -231,10 +236,62 @@ describe("v1.2 Phase 0 validation contracts", () => {
     });
   });
 
-  it.todo("connects duplicate-analyte-substance to production mixed validation");
-  it.todo("connects pre-equilibration-required to production mixed validation");
-  it.todo("connects unsupported-stage-grouping to production mixed planning");
-  it.todo("reuses ambiguous-proton-transfer-direction for mixed direction conflicts");
+  it("connects duplicate-analyte-substance to production mixed validation", () => {
+    const contract = V12_VALIDATION_CONTRACTS[0];
+    if (contract.trigger.kind !== "solution-input") throw new Error("Expected solution input");
+    const result = validateSolutionTitrationInput(contract.trigger.input);
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors[0]).toMatchObject({
+      code: contract.expectedCode,
+      message: contract.expectedMessage,
+    });
+  });
+
+  it("connects pre-equilibration-required to production mixed validation", () => {
+    const contract = V12_VALIDATION_CONTRACTS[1];
+    if (contract.trigger.kind !== "solution-input") throw new Error("Expected solution input");
+    const result = validateSolutionTitrationInput(contract.trigger.input);
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors[0]).toMatchObject({
+      code: contract.expectedCode,
+      message: contract.expectedMessage,
+    });
+  });
+
+  it("connects unsupported-stage-grouping to production mixed validation", () => {
+    const contract = V12_VALIDATION_CONTRACTS[2];
+    if (contract.trigger.kind !== "solution-input") throw new Error("Expected solution input");
+    const result = validateSolutionTitrationInput(contract.trigger.input);
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors[0]).toMatchObject({
+      code: contract.expectedCode,
+      message: contract.expectedMessage,
+    });
+  });
+
+  it("reuses ambiguous-proton-transfer-direction for mixed direction conflicts", () => {
+    const result = validateSolutionTitrationInput({
+      analyteSolution: {
+        totalVolumeMl: 20,
+        components: [{
+          componentId: "amphiprotic-analyte",
+          substanceId: "nahco3",
+          concentrationMolL: 0.05,
+        }],
+      },
+      titrantSubstanceId: "nahco3",
+      titrantConcentrationMolL: 0.1,
+    });
+    expect(result.valid).toBe(false);
+    if (result.valid) return;
+    expect(result.errors[0]).toMatchObject({
+      code: "ambiguous-proton-transfer-direction",
+      message: "プロトン移動方向を一意に決定できません。",
+    });
+  });
 });
 
 describe("v1.2 Phase 0 accessibility contracts", () => {
@@ -277,7 +334,18 @@ describe("v1.2 Phase 0 accessibility contracts", () => {
 });
 
 describe("v1.2 production integration contracts (Phase 1 and later)", () => {
-  it.todo("normalizes Fixture K through the mixed input compiler");
+  it("normalizes Fixture K through the mixed input compiler", () => {
+    const normalized = normalizeSolutionTitrationInput(V12_CONTRACT_FIXTURES.K.input);
+    expect(normalized.analyteSolutionVolumeL).toBe(0.02);
+    expect(
+      normalized.components.map(({ sourceComponentId, substanceId, amountMol }) => ({
+        componentId: sourceComponentId,
+        substanceId,
+        amountMol,
+      })),
+    ).toEqual(V12_CONTRACT_FIXTURES.K.expectedComponentAmountsMol);
+    expect(normalized.pairing.direction).toBe("protonation");
+  });
   it.todo("builds Fixture K boundaries and characteristics in the shared planner");
   it.todo("matches Fixture K golden pH in the shared solver");
   it.todo("samples all Fixture K anchors and both refinement targets");
