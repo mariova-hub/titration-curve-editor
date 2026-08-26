@@ -10,6 +10,7 @@ import {
   normalizeSolutionTitrationInput,
   validateSolutionTitrationInput,
 } from "../../src/chemistry";
+import { APP_TEMPLATE } from "../../src/ui/app";
 
 import {
   V11_PH_TOLERANCE_DIGITS,
@@ -336,7 +337,18 @@ describe("v1.2 Phase 0 accessibility contracts", () => {
     );
   });
 
-  it.todo("connects the frozen accessible names and focus order to the mixed UI");
+  it("connects the frozen accessible names and focus order to the mixed UI", () => {
+    for (const accessibleName of V12_ACCESSIBILITY_CONTRACT
+      .twoComponentAccessibleNames) {
+      expect(APP_TEMPLATE).toContain(accessibleName);
+    }
+    expect(APP_TEMPLATE.indexOf('id="analyte-substance"')).toBeLessThan(
+      APP_TEMPLATE.indexOf('id="analyte-component-2-substance"'),
+    );
+    expect(
+      APP_TEMPLATE.indexOf('id="analyte-component-2-concentration"'),
+    ).toBeLessThan(APP_TEMPLATE.indexOf('id="analyte-volume"'));
+  });
 });
 
 describe("v1.2 production integration contracts (Phase 1 and later)", () => {

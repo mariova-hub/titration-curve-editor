@@ -143,6 +143,18 @@ fieldset {
 
 fieldset:last-child { margin-bottom: 0; }
 
+.analyte-component {
+  margin-top: 0.75rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid #e2e6ea;
+}
+
+.analyte-component button,
+#add-analyte-component {
+  width: 100%;
+  margin-top: 0.7rem;
+}
+
 legend {
   padding: 0 0.35rem;
   color: #34424e;

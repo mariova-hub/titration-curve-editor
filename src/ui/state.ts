@@ -1,7 +1,16 @@
-import { validateAnalyticalSystemInput } from "../chemistry";
+import {
+  SUBSTANCES,
+  validateAnalyticalSystemInput,
+  validateSolutionTitrationInput,
+  type SolutionTitrationValidationError,
+} from "../chemistry";
 import { calculateTitrationCurve } from "../calculation";
 import type { GraphStyle } from "../domain/graph-style";
-import type { TitrationInput, TitrationResult } from "../domain/titration";
+import type {
+  TitrationCurveInput,
+  TitrationInput,
+  TitrationResult,
+} from "../domain/titration";
 import type { ValidationError } from "../domain/validation";
 import type { PngBackgroundMode, PngExportOptions, PngExportScale } from "../export";
 import {
@@ -16,6 +25,8 @@ export interface TitrationDraft {
   analyteSubstanceId: string;
   analyteConcentrationMolL: string;
   analyteVolumeMl: string;
+  analyteComponent2SubstanceId?: string;
+  analyteComponent2ConcentrationMolL?: string;
   titrantSubstanceId: string;
   titrantConcentrationMolL: string;
 }
@@ -33,7 +44,7 @@ export type ChemicalStatus = "success" | "invalid" | "calculation-error";
 
 export interface ChemicalState {
   draft: TitrationDraft;
-  validatedInput: TitrationInput | null;
+  validatedInput: TitrationCurveInput | null;
   result: TitrationResult | null;
   status: ChemicalStatus;
   errors: UiError[];
@@ -65,7 +76,7 @@ export interface AppState {
 }
 
 export interface AppDependencies {
-  calculateCurve(input: TitrationInput, options?: SamplingOptions): TitrationResult;
+  calculateCurve(input: TitrationCurveInput, options?: SamplingOptions): TitrationResult;
   renderSvg(result: TitrationResult, style: GraphStyle): string;
 }
 
@@ -104,7 +115,7 @@ export const DEFAULT_PNG_EXPORT_OPTIONS: Readonly<PngExportOptions> = {
 };
 
 type DraftParseResult =
-  | { ok: true; input: TitrationInput }
+  | { ok: true; input: TitrationCurveInput }
   | { ok: false; errors: UiError[] };
 
 export function toUiValidationErrors(
@@ -122,7 +133,45 @@ const NUMERIC_FIELDS: ReadonlyArray<{
   { field: "titrantConcentrationMolL", label: "滴下する水溶液の濃度" },
 ];
 
-function parseDraft(draft: TitrationDraft): DraftParseResult {
+export function hasSecondAnalyteComponent(draft: TitrationDraft): boolean {
+  return draft.analyteComponent2SubstanceId !== undefined ||
+    draft.analyteComponent2ConcentrationMolL !== undefined;
+}
+
+function solutionValidationFieldToUiField(
+  field: SolutionTitrationValidationError["field"],
+): UiErrorField {
+  if (field === "analyteSolution.totalVolumeMl") return "analyteVolumeMl";
+  if (field === "titrantSubstanceId") return "titrantSubstanceId";
+  if (field === "titrantConcentrationMolL") {
+    return "titrantConcentrationMolL";
+  }
+  if (/^analyteSolution\.components\.0\.substanceId$/.test(field)) {
+    return "analyteSubstanceId";
+  }
+  if (/^analyteSolution\.components\.0\.concentrationMolL$/.test(field)) {
+    return "analyteConcentrationMolL";
+  }
+  if (/^analyteSolution\.components\.1\.substanceId$/.test(field)) {
+    return "analyteComponent2SubstanceId";
+  }
+  if (/^analyteSolution\.components\.1\.concentrationMolL$/.test(field)) {
+    return "analyteComponent2ConcentrationMolL";
+  }
+  return "substancePair";
+}
+
+function toUiSolutionValidationErrors(
+  errors: readonly SolutionTitrationValidationError[],
+): UiError[] {
+  return errors.map(({ code, field, message }) => ({
+    code,
+    field: solutionValidationFieldToUiField(field),
+    message,
+  }));
+}
+
+export function parseTitrationDraft(draft: TitrationDraft): DraftParseResult {
   const parsedValues: Partial<Record<(typeof NUMERIC_FIELDS)[number]["field"], number>> = {};
   const errors: UiError[] = [];
 
@@ -140,7 +189,62 @@ function parseDraft(draft: TitrationDraft): DraftParseResult {
     parsedValues[field] = value;
   }
 
+  let secondConcentration: number | undefined;
+  if (hasSecondAnalyteComponent(draft)) {
+    const rawValue = draft.analyteComponent2ConcentrationMolL?.trim() ?? "";
+    if (rawValue.length === 0) {
+      errors.push({
+        code: "required",
+        field: "analyteComponent2ConcentrationMolL",
+        message: "分析物質2の濃度を入力してください。",
+      });
+    } else {
+      const value = Number(rawValue);
+      if (!Number.isFinite(value)) {
+        errors.push({
+          code: "invalid-number",
+          field: "analyteComponent2ConcentrationMolL",
+          message: "分析物質2の濃度には有限の数値を入力してください。",
+        });
+      } else {
+        secondConcentration = value;
+      }
+    }
+  }
+
   if (errors.length > 0) return { ok: false, errors };
+
+  if (hasSecondAnalyteComponent(draft)) {
+    const input: TitrationCurveInput = {
+      analyteSolution: {
+        totalVolumeMl: parsedValues.analyteVolumeMl ?? Number.NaN,
+        components: [
+          {
+            componentId: "analyte-component-1",
+            substanceId: draft.analyteSubstanceId,
+            concentrationMolL:
+              parsedValues.analyteConcentrationMolL ?? Number.NaN,
+          },
+          {
+            componentId: "analyte-component-2",
+            substanceId: draft.analyteComponent2SubstanceId ?? "",
+            concentrationMolL: secondConcentration ?? Number.NaN,
+          },
+        ],
+      },
+      titrantSubstanceId: draft.titrantSubstanceId,
+      titrantConcentrationMolL:
+        parsedValues.titrantConcentrationMolL ?? Number.NaN,
+    };
+    const validation = validateSolutionTitrationInput(input);
+    if (!validation.valid) {
+      return {
+        ok: false,
+        errors: toUiSolutionValidationErrors(validation.errors),
+      };
+    }
+    return { ok: true, input };
+  }
 
   const input: TitrationInput = {
     analyteSubstanceId: draft.analyteSubstanceId,
@@ -208,7 +312,7 @@ export function createAppState(
   draft: TitrationDraft = { ...DEFAULT_TITRATION_DRAFT },
   dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
 ): AppState {
-  const parsed = parseDraft(draft);
+  const parsed = parseTitrationDraft(draft);
   const fallbackStyle = createExamGraphStyle(30);
   if (!parsed.ok) {
     return {
@@ -281,7 +385,7 @@ function calculateForDraft(
   dependencies: AppDependencies,
   forcedMaxVolumeMl?: number,
 ): AppState {
-  const parsed = parseDraft(draft);
+  const parsed = parseTitrationDraft(draft);
   if (!parsed.ok) {
     return {
       ...state,
@@ -349,6 +453,47 @@ export function updateTitrationDraft(
     ? state.rendering.graphStyle.xMax
     : undefined;
   return calculateForDraft(state, draft, dependencies, forcedMaxVolumeMl);
+}
+
+export function addAnalyteComponent(
+  state: AppState,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  if (hasSecondAnalyteComponent(state.chemical.draft)) return state;
+  const secondSubstanceId = SUBSTANCES.find(
+    ({ id }) => id !== state.chemical.draft.analyteSubstanceId,
+  )?.id ?? state.chemical.draft.analyteSubstanceId;
+  const draft: TitrationDraft = {
+    ...state.chemical.draft,
+    analyteComponent2SubstanceId: secondSubstanceId,
+    analyteComponent2ConcentrationMolL:
+      state.chemical.draft.analyteConcentrationMolL,
+  };
+  const forcedMaxVolumeMl = state.rendering.xRangeMode === "manual"
+    ? state.rendering.graphStyle.xMax
+    : undefined;
+  return calculateForDraft(state, draft, dependencies, forcedMaxVolumeMl);
+}
+
+export function removeSecondAnalyteComponent(
+  state: AppState,
+  dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
+): AppState {
+  if (!hasSecondAnalyteComponent(state.chemical.draft)) return state;
+  const {
+    analyteComponent2SubstanceId: _substance,
+    analyteComponent2ConcentrationMolL: _concentration,
+    ...singleDraft
+  } = state.chemical.draft;
+  const forcedMaxVolumeMl = state.rendering.xRangeMode === "manual"
+    ? state.rendering.graphStyle.xMax
+    : undefined;
+  return calculateForDraft(
+    state,
+    singleDraft,
+    dependencies,
+    forcedMaxVolumeMl,
+  );
 }
 
 export function updateGraphStyle(

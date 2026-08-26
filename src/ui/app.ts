@@ -17,10 +17,13 @@ import {
 } from "../rendering";
 import {
   applyPresetToState,
+  addAnalyteComponent,
   canExportPng,
   canExportSvg,
   createAppState,
   errorsForField,
+  hasSecondAnalyteComponent,
+  removeSecondAnalyteComponent,
   selectAspectRatioPreset,
   setAspectRatioLock,
   updateAspectRatioInput,
@@ -117,17 +120,31 @@ export const APP_TEMPLATE = `
           <div class="section-content">
             <fieldset>
               <legend>滴定される水溶液</legend>
-              <label for="analyte-substance">物質</label>
+              <label id="analyte-substance-label" for="analyte-substance" data-mixed-label="分析物質 1">物質</label>
               <select id="analyte-substance" data-draft-field="analyteSubstanceId"></select>
               <p class="field-error" id="error-analyte-substance" aria-live="polite"></p>
 
-              <label for="analyte-concentration">モル濃度 <span>mol/L</span></label>
+              <label id="analyte-concentration-label" for="analyte-concentration" data-mixed-label="分析物質 1 の濃度">モル濃度 <span>mol/L</span></label>
               <input id="analyte-concentration" data-draft-field="analyteConcentrationMolL" type="number" min="0" step="any" inputmode="decimal" />
               <p class="field-error" id="error-analyte-concentration" aria-live="polite"></p>
+
+              <div id="analyte-component-2" class="analyte-component" hidden>
+                <label for="analyte-component-2-substance">分析物質 2</label>
+                <select id="analyte-component-2-substance" data-draft-field="analyteComponent2SubstanceId"></select>
+                <p class="field-error" id="error-analyte-component-2-substance" aria-live="polite"></p>
+
+                <label for="analyte-component-2-concentration">分析物質 2 の濃度</label>
+                <input id="analyte-component-2-concentration" data-draft-field="analyteComponent2ConcentrationMolL" type="number" min="0" step="any" inputmode="decimal" />
+                <p class="field-error" id="error-analyte-component-2-concentration" aria-live="polite"></p>
+
+                <button type="button" id="remove-analyte-component-2" class="secondary-button">分析物質 2 を削除</button>
+              </div>
 
               <label for="analyte-volume">体積 <span>mL</span></label>
               <input id="analyte-volume" data-draft-field="analyteVolumeMl" type="number" min="0" step="any" inputmode="decimal" />
               <p class="field-error" id="error-analyte-volume" aria-live="polite"></p>
+
+              <button type="button" id="add-analyte-component" class="secondary-button">分析物質を追加</button>
             </fieldset>
 
             <fieldset>
@@ -429,8 +446,13 @@ function axisWith(style: GraphStyle, orientation: "x" | "y", update: (axis: Axis
 export function mountApp(root: HTMLElement): void {
   root.innerHTML = APP_TEMPLATE;
   const analyteSelect = requiredElement<HTMLSelectElement>(root, "analyte-substance");
+  const analyteComponent2Select = requiredElement<HTMLSelectElement>(
+    root,
+    "analyte-component-2-substance",
+  );
   const titrantSelect = requiredElement<HTMLSelectElement>(root, "titrant-substance");
   populateSubstances(analyteSelect);
+  populateSubstances(analyteComponent2Select);
   populateSubstances(titrantSelect);
 
   let state = createAppState();
@@ -454,6 +476,16 @@ export function mountApp(root: HTMLElement): void {
   }> = [
     { id: "analyte-substance", field: "analyteSubstanceId", event: "change" },
     { id: "analyte-concentration", field: "analyteConcentrationMolL", event: "input" },
+    {
+      id: "analyte-component-2-substance",
+      field: "analyteComponent2SubstanceId",
+      event: "change",
+    },
+    {
+      id: "analyte-component-2-concentration",
+      field: "analyteComponent2ConcentrationMolL",
+      event: "input",
+    },
     { id: "analyte-volume", field: "analyteVolumeMl", event: "input" },
     { id: "titrant-substance", field: "titrantSubstanceId", event: "change" },
     { id: "titrant-concentration", field: "titrantConcentrationMolL", event: "input" },
@@ -516,11 +548,33 @@ export function mountApp(root: HTMLElement): void {
 
   function syncControls(): void {
     const { draft, result, status: chemicalStatus, previewIsStale } = state.chemical;
+    const hasSecondComponent = hasSecondAnalyteComponent(draft);
+    requiredElement<HTMLElement>(root, "analyte-component-2").hidden =
+      !hasSecondComponent;
+    requiredElement<HTMLButtonElement>(root, "add-analyte-component").hidden =
+      hasSecondComponent;
+    requiredElement<HTMLElement>(root, "analyte-substance-label").textContent =
+      hasSecondComponent ? "分析物質 1" : "物質";
+    requiredElement<HTMLElement>(root, "analyte-concentration-label").innerHTML =
+      hasSecondComponent
+        ? "分析物質 1 の濃度"
+        : "モル濃度 <span>mol/L</span>";
     for (const { id, field } of draftControls) {
-      setValue(requiredElement<HTMLInputElement | HTMLSelectElement>(root, id), draft[field]);
+      setValue(
+        requiredElement<HTMLInputElement | HTMLSelectElement>(root, id),
+        draft[field] ?? "",
+      );
     }
     showError("error-analyte-substance", "analyteSubstanceId");
     showError("error-analyte-concentration", "analyteConcentrationMolL");
+    showError(
+      "error-analyte-component-2-substance",
+      "analyteComponent2SubstanceId",
+    );
+    showError(
+      "error-analyte-component-2-concentration",
+      "analyteComponent2ConcentrationMolL",
+    );
     showError("error-analyte-volume", "analyteVolumeMl");
     showError("error-titrant-substance", "titrantSubstanceId");
     showError("error-titrant-concentration", "titrantConcentrationMolL");
@@ -627,6 +681,20 @@ export function mountApp(root: HTMLElement): void {
     const control = requiredElement<HTMLInputElement | HTMLSelectElement>(root, id);
     control.addEventListener(event, () => commit(updateTitrationDraft(state, field, control.value)));
   }
+
+  const addAnalyteButton = requiredElement<HTMLButtonElement>(
+    root,
+    "add-analyte-component",
+  );
+  addAnalyteButton.addEventListener("click", () => {
+    commit(addAnalyteComponent(state));
+    analyteComponent2Select.focus();
+  });
+  requiredElement<HTMLButtonElement>(root, "remove-analyte-component-2")
+    .addEventListener("click", () => {
+      commit(removeSecondAnalyteComponent(state));
+      addAnalyteButton.focus();
+    });
 
   requiredElement<HTMLButtonElement>(root, "preset-exam").addEventListener("click", () => commit(applyPresetToState(state, "exam")));
   requiredElement<HTMLButtonElement>(root, "preset-teaching").addEventListener("click", () => commit(applyPresetToState(state, "teaching")));

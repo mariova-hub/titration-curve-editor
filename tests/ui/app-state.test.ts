@@ -105,7 +105,9 @@ describe("Phase 5 application state", () => {
 
     expect(dependencies.calculateCurve).toHaveBeenCalledTimes(calls + 1);
     expect(state.chemical.status).toBe("success");
-    expect(state.chemical.validatedInput?.analyteConcentrationMolL).toBe(0.2);
+    expect(state.chemical.validatedInput).toMatchObject({
+      analyteConcentrationMolL: 0.2,
+    });
     expect(state.chemical.result).not.toBe(initial.chemical.result);
   });
 
