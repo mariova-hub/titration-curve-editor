@@ -141,13 +141,14 @@ describe("v1.2 Fixture K production equilibrium anchors", () => {
       expect(golden).toBeDefined();
       expect(point.pH).toBeCloseTo(golden!.pH, V12_PH_TOLERANCE_DIGITS);
     }
-    expect(result.points.map(({ addedVolumeMl }) => addedVolumeMl)).toEqual([
-      0,
-      7.5,
-      15,
-      20,
-      25,
-    ]);
+    const sampledVolumes = new Set(
+      result.points.map(({ addedVolumeMl }) => addedVolumeMl),
+    );
+    expect(
+      [0, 7.5, 15, 20, 25].every((volumeMl) =>
+        sampledVolumes.has(volumeMl)
+      ),
+    ).toBe(true);
   });
 
   it("preserves the legacy single-NaOH diagnostic identity", () => {

@@ -10,6 +10,11 @@ import {
   normalizeSolutionTitrationInput,
   validateSolutionTitrationInput,
 } from "../../src/chemistry";
+import { createSvgExportArtifact } from "../../src/export";
+import {
+  createTeachingGraphStyle,
+  renderTitrationSvg,
+} from "../../src/rendering";
 import { APP_TEMPLATE } from "../../src/ui/app";
 
 import {
@@ -401,7 +406,40 @@ describe("v1.2 production integration contracts (Phase 1 and later)", () => {
       );
     }
   });
-  it.todo("samples all Fixture K anchors and both refinement targets");
-  it.todo("renders and exports two Fixture K equivalence guides");
-  it.todo("uses 31.25 mL as Fixture K automatic range");
+  it("samples all Fixture K anchors and both refinement targets", () => {
+    const result = calculateTitrationCurve(V12_CONTRACT_FIXTURES.K.input);
+    expect(result.points.length).toBeGreaterThan(5);
+    for (const volumeMl of V12_CONTRACT_FIXTURES.K.exactAnchorVolumesMl) {
+      expect(
+        result.points.filter(({ addedVolumeMl }) => addedVolumeMl === volumeMl),
+      ).toHaveLength(1);
+    }
+    for (const target of V12_CONTRACT_FIXTURES.K.refinementTargetVolumesMl) {
+      expect(
+        result.points.filter(
+          ({ addedVolumeMl }) => Math.abs(addedVolumeMl - target) <= 0.5,
+        ).length,
+      ).toBeGreaterThan(30);
+    }
+  });
+  it("renders and exports two Fixture K equivalence guides", async () => {
+    const fixture = V12_CONTRACT_FIXTURES.K;
+    const result = calculateTitrationCurve(fixture.input);
+    const svg = renderTitrationSvg(
+      result,
+      createTeachingGraphStyle(fixture.expectedAutoRangeMl),
+    );
+    expect(svg.match(/data-role="equivalence-guide"/g)).toHaveLength(2);
+    const artifact = createSvgExportArtifact(svg, "fixture-k");
+    expect(artifact.blob.size).toBeGreaterThan(0);
+    expect(
+      (await artifact.blob.text()).match(/data-role="equivalence-guide"/g),
+    ).toHaveLength(2);
+  });
+  it("uses 31.25 mL as Fixture K automatic range", () => {
+    const result = calculateTitrationCurve(V12_CONTRACT_FIXTURES.K.input);
+    expect(result.points.at(-1)?.addedVolumeMl).toBe(
+      V12_CONTRACT_FIXTURES.K.expectedAutoRangeMl,
+    );
+  });
 });

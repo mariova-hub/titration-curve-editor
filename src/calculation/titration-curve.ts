@@ -118,12 +118,17 @@ function calculateSolutionTitrationCurve(
   const characteristicPoints =
     createCharacteristicPointsFromEquivalencePoints(equivalencePoints)
       .map((point) => ({ ...point, pH: calculateOnce(point.volumeMl) }));
-  const anchorVolumes = [
-    0,
-    ...characteristicPoints.map(({ volumeMl }) => volumeMl),
-    ...equivalencePoints.map(({ volumeMl }) => volumeMl),
-  ].sort((left, right) => left - right);
-  const points = [...new Set(anchorVolumes)].map((addedVolumeMl) => ({
+  const maxVolumeMl = determineMaxVolumeMl(
+    equivalencePoints,
+    options.maxVolumeMl,
+  );
+  const samplingVolumes = generateSamplingVolumes(
+    maxVolumeMl,
+    equivalencePoints,
+    characteristicPoints,
+    options,
+  );
+  const points = samplingVolumes.map((addedVolumeMl) => ({
     addedVolumeMl,
     pH: calculateOnce(addedVolumeMl),
   }));
