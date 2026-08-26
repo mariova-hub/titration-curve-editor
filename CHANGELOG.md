@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.2.0] - 2026-08-26
+
+### Added
+
+- 通常の1成分操作を維持しながら、必要な場合だけ2成分目を追加できるmixed analyte入力
+- 共通体積20.0 mL中のNa₂CO₃ 0.0500 mol/LとNaOH 0.0250 mol/LをHCl 0.100 mol/Lで滴定する正式対応ケース
+- 重複成分、滴定前の内部中和、未対応の反応段階を明確に案内するmixed analyte validation
+- 2つの当量点を持つmixed curveのLive Preview、SVG、PNG出力
+
+### Changed
+
+- 既存の平衡計算、Adaptive Sampling、auto range、複数当量点guideをmixed analyteへ適用
+- 2つの当量点周辺を高密度に計算し、共通の描画・出力経路へ反映
+
+### Notes
+
+- mixed analyte UIは最大2成分で、滴定液は単一成分です。
+- 初期混合時に実質的な中和を必要とする組み合わせや、反応段階を一意に扱えない組み合わせには対応していません。
+- 炭酸系はCO₂散逸を考慮しない閉鎖系モデルです。
+
 ## [1.1.0] - 2026-08-25
 
 ### Added

@@ -2,7 +2,7 @@
 
 - 文書状態: 実装前の正式計算契約
 - 対象: Chemistry / Calculation / Equivalence / Sampling
-- 関連文書: [project-specification.md](./project-specification.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)
+- 関連文書: [project-specification.md](./project-specification.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)、[v1.2-mixed-analyte-titration-design.md](./v1.2-mixed-analyte-titration-design.md)
 
 ## 1. 目的
 

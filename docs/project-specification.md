@@ -3,7 +3,7 @@
 - 文書状態: 実装前の設計契約
 - 対象リポジトリ: `titration-curve-editor`
 - 対象Phase: MVP設計・実装・受入れ
-- 関連文書: [calculation-spec.md](./calculation-spec.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)
+- 関連文書: [calculation-spec.md](./calculation-spec.md)、[ui-rendering-test-spec.md](./ui-rendering-test-spec.md)、[v1.1-salt-titration-design.md](./v1.1-salt-titration-design.md)、[v1.2-mixed-analyte-titration-design.md](./v1.2-mixed-analyte-titration-design.md)
 
 ## 1. 文書の目的と優先順位
 
@@ -564,4 +564,4 @@ v1.2では、Na2CO3とNaOHを共通体積の分析溶液へ濃度指定し、単
 - mixed専用solver/rendererを作らず、既存composition compiler、equilibrium solver、sampling、SVG/PNG pipelineを再利用する。
 - v1.0 Fixtures A〜Gとv1.1 Fixtures H〜Jを完全regression gateとする。
 
-本節はv1.2の実装開始を意味しない。設計Phaseではproduction/test/release artifactを変更しない。
+本節に基づくv1.2 feature implementationは完了済みである。Release Preparationでは計算・UI・描画仕様を変更せず、version metadataとrelease文書だけを更新する。
