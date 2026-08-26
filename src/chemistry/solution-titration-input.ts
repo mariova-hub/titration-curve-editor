@@ -9,6 +9,8 @@ import type {
 import type {
   ValidationErrorCode,
 } from "../domain/validation";
+import type { CompiledSolutionComposition } from "../domain/solution-composition";
+import { compileSolutionComposition } from "./composition-compiler";
 import {
   deriveSubstanceProtonTransferProfile,
   getProfileEquivalentCapacity,
@@ -373,4 +375,18 @@ export function normalizeSolutionTitrationInput(
     throw new SolutionTitrationInputError(result.errors[0]);
   }
   return result.normalizedInput;
+}
+
+/** Compiles only the normalized analyte solution; it does not plan boundaries or solve pH. */
+export function compileNormalizedAnalyteComposition(
+  input: NormalizedSolutionTitrationInput,
+): CompiledSolutionComposition {
+  return compileSolutionComposition(
+    input.components.map(({ sourceComponentId, substanceId, amountMol }) => ({
+      sourceComponentId,
+      substanceId,
+      amountMol,
+    })),
+    input.analyteSolutionVolumeL,
+  );
 }

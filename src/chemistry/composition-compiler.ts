@@ -11,6 +11,11 @@ import type {
   QuantifiedSolutionComponent,
 } from "../domain/solution-composition";
 import { getFixedIonById, type FixedIon } from "./fixed-ions";
+import {
+  adaptStrongHydroxideComposition,
+  StrongHydroxideCompositionAdapterError,
+  type AdaptedStrongHydroxideComponent,
+} from "./strong-hydroxide-composition-adapter";
 import { getSubstanceById } from "./substances";
 
 export type CompositionCompilerErrorCode =
@@ -174,12 +179,32 @@ export function compileSolutionComposition(
         `Unknown substance: ${component.substanceId}.`,
       );
     }
-    const composition = substance.dissolvedComposition;
+    let composition = substance.dissolvedComposition;
+    let adaptedStrongHydroxide: AdaptedStrongHydroxideComponent | undefined;
     if (composition === undefined) {
-      throw new CompositionCompilerError(
-        "missing-dissolved-composition",
-        `Substance ${substance.id} has no dissolved composition.`,
-      );
+      try {
+        adaptedStrongHydroxide = adaptStrongHydroxideComposition(
+          substance,
+          component,
+        );
+      } catch (error) {
+        if (!(error instanceof StrongHydroxideCompositionAdapterError)) {
+          throw error;
+        }
+        throw new CompositionCompilerError(
+          error.code === "unregistered-legacy-fixed-ion"
+            ? "invalid-fixed-ion-reference"
+            : "invalid-composition-coefficient",
+          error.message,
+        );
+      }
+      composition = adaptedStrongHydroxide?.dissolvedComposition;
+      if (composition === undefined) {
+        throw new CompositionCompilerError(
+          "missing-dissolved-composition",
+          `Substance ${substance.id} has no dissolved composition.`,
+        );
+      }
     }
 
     for (const familyComponent of composition.familyComponents) {
@@ -251,17 +276,18 @@ export function compileSolutionComposition(
       }
     }
 
-    if (
-      component.amountMol > 0 &&
-      substance.acidBaseModel.kind === "strong-hydroxide"
-    ) {
-      protonTransferSources.push({
-        kind: "strong-hydroxide",
-        sourceComponentId: component.sourceComponentId,
-        amountMol: component.amountMol,
-        hydroxideStoichiometry:
-          substance.acidBaseModel.hydroxideStoichiometry,
-      });
+    if (component.amountMol > 0) {
+      if (adaptedStrongHydroxide !== undefined) {
+        protonTransferSources.push(adaptedStrongHydroxide.protonTransferSource);
+      } else if (substance.acidBaseModel.kind === "strong-hydroxide") {
+        protonTransferSources.push({
+          kind: "strong-hydroxide",
+          sourceComponentId: component.sourceComponentId,
+          amountMol: component.amountMol,
+          hydroxideStoichiometry:
+            substance.acidBaseModel.hydroxideStoichiometry,
+        });
+      }
     }
   }
 

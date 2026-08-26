@@ -1,3 +1,4 @@
+import type { ChemicalSpecies } from "../domain/chemistry";
 import type { FixedIonId } from "../domain/solution-composition";
 
 export interface FixedIon {
@@ -24,4 +25,19 @@ const fixedIonById = new Map<string, FixedIon>(
 
 export function getFixedIonById(id: string): FixedIon | undefined {
   return fixedIonById.get(id);
+}
+
+/**
+ * Resolves legacy complete-ion metadata to the canonical fixed-ion registry.
+ * Identity is chemical metadata, not a legacy substance or species id.
+ */
+export function findCanonicalFixedIonBySpecies(
+  species: Pick<ChemicalSpecies, "formula" | "charge" | "boundProtonCount">,
+): FixedIon | undefined {
+  return FIXED_IONS.find(
+    (fixedIon) =>
+      fixedIon.formula === species.formula &&
+      fixedIon.charge === species.charge &&
+      fixedIon.boundProtonCount === species.boundProtonCount,
+  );
 }
