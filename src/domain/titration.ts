@@ -39,6 +39,8 @@ export interface EquivalencePoint {
   classification?: "theoretical";
   stoichiometricEquivalent?: number;
   participatingStepIds?: string[];
+  cumulativeEquivalentMoles?: number;
+  participatingProcessIds?: string[];
 }
 
 export type CharacteristicPointType =

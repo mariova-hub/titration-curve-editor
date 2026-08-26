@@ -5,8 +5,17 @@ import {
   getProcessesForMode,
   resolveProtonTransferPairing,
 } from "../chemistry/proton-transfer";
+import {
+  compileNormalizedAnalyteComposition,
+  type NormalizedSolutionTitrationInput,
+} from "../chemistry/solution-titration-input";
 import { getSubstanceById } from "../chemistry/substances";
-import type { EquivalencePoint, TitrationInput } from "../domain/titration";
+import type {
+  CharacteristicPoint,
+  EquivalencePoint,
+  TitrationInput,
+} from "../domain/titration";
+import type { CompiledSolutionComposition } from "../domain/solution-composition";
 import type {
   ComponentLocalStoichiometricPath,
   ProtonTransferProfile,
@@ -38,7 +47,7 @@ export class StoichiometricPlanningError extends Error {
 export interface PlannedCompositionTitration {
   boundaryPlan: StoichiometricBoundaryPlan;
   pairing: SupportedProtonTransferPairing;
-  analyteReferenceAmountMol: number;
+  analyteReferenceAmountMol?: number;
 }
 
 function requirePositiveFinite(value: number, label: string): void {
@@ -91,26 +100,161 @@ export function createSingleReactiveComponentBoundaryPlan(
     );
   }
 
-  const path = paths[0]!;
+  return createSolutionLevelBoundaryPlan(paths);
+}
+
+function contributionSequenceKey(
+  path: ComponentLocalStoichiometricPath,
+): string {
+  return path.contributions.map(({ kind, processId }) => `${kind}:${processId}`)
+    .join("|");
+}
+
+function requireValidPathContribution(
+  contribution: StoichiometricCapacityContribution,
+): void {
+  if (
+    !Number.isFinite(contribution.equivalentMoles) ||
+    contribution.equivalentMoles <= 0
+  ) {
+    throw new StoichiometricPlanningError(
+      "invalid-input",
+      "Stoichiometric contributions must be positive finite amounts.",
+    );
+  }
+}
+
+/**
+ * Groups the v1.2-supported topology: one unique family process path plus
+ * zero or more strong-hydroxide prefix capacities. Family path identity is
+ * established by topology-derived process ids before positional grouping.
+ */
+export function createSolutionLevelBoundaryPlan(
+  paths: readonly ComponentLocalStoichiometricPath[],
+): StoichiometricBoundaryPlan {
+  if (paths.length === 0) {
+    throw new StoichiometricPlanningError(
+      "unsupported-stage-grouping",
+      "At least one reactive stoichiometric path is required.",
+    );
+  }
+
+  const directions = new Set(paths.map(({ direction }) => direction));
+  if (directions.size !== 1) {
+    throw new StoichiometricPlanningError(
+      "unsupported-stage-grouping",
+      "All grouped paths must have the same proton-transfer direction.",
+    );
+  }
+
+  const familyPaths: ComponentLocalStoichiometricPath[] = [];
+  const strongHydroxideContributions: StoichiometricCapacityContribution[] = [];
+  for (const path of paths) {
+    if (path.contributions.length === 0) {
+      throw new StoichiometricPlanningError(
+        "unsupported-stage-grouping",
+        "Reactive paths must contain at least one contribution.",
+      );
+    }
+    path.contributions.forEach(requireValidPathContribution);
+
+    const kinds = new Set(path.contributions.map(({ kind }) => kind));
+    if (kinds.size !== 1) {
+      throw new StoichiometricPlanningError(
+        "unsupported-stage-grouping",
+        "A component path cannot mix family and strong-hydroxide processes.",
+      );
+    }
+    if (path.contributions[0]!.kind === "strong-hydroxide") {
+      strongHydroxideContributions.push(...path.contributions);
+    } else {
+      familyPaths.push(path);
+    }
+  }
+
+  if (familyPaths.length === 0) {
+    const incrementalEquivalentMoles = strongHydroxideContributions.reduce(
+      (total, contribution) => total + contribution.equivalentMoles,
+      0,
+    );
+    return {
+      direction: paths[0]!.direction,
+      stages: [
+        {
+          order: 1,
+          contributions: strongHydroxideContributions,
+          incrementalEquivalentMoles,
+          cumulativeEquivalentMoles: incrementalEquivalentMoles,
+          participatingStepIds: [],
+        },
+      ],
+    };
+  }
+
+  const familyPathKeys = new Set(familyPaths.map(contributionSequenceKey));
+  if (familyPathKeys.size !== 1) {
+    throw new StoichiometricPlanningError(
+      "unsupported-stage-grouping",
+      "Multiple family process paths do not have an explicit stage alignment.",
+    );
+  }
+
   let cumulativeEquivalentMoles = 0;
   const participatingStepIds: string[] = [];
-  const stages: StoichiometricBoundaryStage[] = path.contributions.map(
-    (contribution, index) => {
-      cumulativeEquivalentMoles += contribution.equivalentMoles;
-      if (contribution.kind === "family-step") {
-        participatingStepIds.push(contribution.processId);
+  const stages: StoichiometricBoundaryStage[] = familyPaths[0]!.contributions.map(
+    (_contribution, index) => {
+      const familyContributions = familyPaths.map(
+        (path) => path.contributions[index]!,
+      );
+      const contributions = index === 0
+        ? [...strongHydroxideContributions, ...familyContributions]
+        : familyContributions;
+      const incrementalEquivalentMoles = contributions.reduce(
+        (total, contribution) => total + contribution.equivalentMoles,
+        0,
+      );
+      cumulativeEquivalentMoles += incrementalEquivalentMoles;
+      for (const contribution of familyContributions) {
+        if (!participatingStepIds.includes(contribution.processId)) {
+          participatingStepIds.push(contribution.processId);
+        }
       }
       return {
         order: index + 1,
-        contributions: [contribution],
-        incrementalEquivalentMoles: contribution.equivalentMoles,
+        contributions,
+        incrementalEquivalentMoles,
         cumulativeEquivalentMoles,
         participatingStepIds: [...participatingStepIds],
       };
     },
   );
 
-  return { direction: path.direction, stages };
+  return { direction: paths[0]!.direction, stages };
+}
+
+export function planCompiledSolutionTitrationBoundaries(
+  compiledAnalyte: CompiledSolutionComposition,
+  pairing: SupportedProtonTransferPairing,
+): PlannedCompositionTitration {
+  const analyteProfile =
+    deriveCompiledSolutionProtonTransferProfile(compiledAnalyte);
+  const paths = createComponentLocalStoichiometricPaths(
+    analyteProfile,
+    pairing,
+  );
+  return {
+    boundaryPlan: createSolutionLevelBoundaryPlan(paths),
+    pairing,
+  };
+}
+
+export function planSolutionTitrationBoundaries(
+  input: NormalizedSolutionTitrationInput,
+): PlannedCompositionTitration {
+  return planCompiledSolutionTitrationBoundaries(
+    compileNormalizedAnalyteComposition(input),
+    input.pairing,
+  );
 }
 
 export function planCompositionTitrationBoundaries(
@@ -169,13 +313,12 @@ export function planCompositionTitrationBoundaries(
     );
   }
 
-  const paths = createComponentLocalStoichiometricPaths(
-    analyteProfile,
+  const planned = planCompiledSolutionTitrationBoundaries(
+    compiledAnalyte,
     pairing,
   );
   return {
-    boundaryPlan: createSingleReactiveComponentBoundaryPlan(paths),
-    pairing,
+    ...planned,
     analyteReferenceAmountMol,
   };
 }
@@ -189,19 +332,64 @@ export function createEquivalencePointsFromBoundaryPlan(
     titrantConcentrationMolL *
     planned.pairing.titrantEquivalentCapacityPerMol;
 
-  return planned.boundaryPlan.stages.map((stage) => ({
-    id: `equivalence-${stage.order}`,
-    order: stage.order,
-    volumeMl:
+  return planned.boundaryPlan.stages.map((stage, index) => {
+    const calculatedVolumeMl =
       stage.cumulativeEquivalentMoles /
       titrantEquivalentConcentration *
-      1000,
-    classification: "theoretical",
-    stoichiometricEquivalent:
-      stage.cumulativeEquivalentMoles /
-      planned.analyteReferenceAmountMol,
-    participatingStepIds: [...stage.participatingStepIds],
-  }));
+      1000;
+    const point: EquivalencePoint = {
+      id: `equivalence-${stage.order}`,
+      order: stage.order,
+      volumeMl: planned.analyteReferenceAmountMol === undefined
+        ? Number(calculatedVolumeMl.toPrecision(15))
+        : calculatedVolumeMl,
+      classification: "theoretical",
+      participatingStepIds: [...stage.participatingStepIds],
+    };
+    if (planned.analyteReferenceAmountMol !== undefined) {
+      point.stoichiometricEquivalent =
+        stage.cumulativeEquivalentMoles /
+        planned.analyteReferenceAmountMol;
+    } else {
+      point.cumulativeEquivalentMoles = stage.cumulativeEquivalentMoles;
+      point.participatingProcessIds = [
+        ...new Set(
+          planned.boundaryPlan.stages
+            .slice(0, index + 1)
+            .flatMap(({ contributions }) =>
+              contributions.map(({ processId }) => processId)
+            ),
+        ),
+      ];
+    }
+    return point;
+  });
+}
+
+export function createCharacteristicPointsFromEquivalencePoints(
+  equivalencePoints: readonly EquivalencePoint[],
+): CharacteristicPoint[] {
+  let previousVolumeMl = 0;
+  return equivalencePoints.map((equivalencePoint, index) => {
+    if (
+      !Number.isFinite(equivalencePoint.volumeMl) ||
+      equivalencePoint.volumeMl <= previousVolumeMl
+    ) {
+      throw new StoichiometricPlanningError(
+        "invalid-input",
+        "Equivalence volumes must be positive, finite, and strictly increasing.",
+      );
+    }
+    const volumeMl = (previousVolumeMl + equivalencePoint.volumeMl) / 2;
+    previousVolumeMl = equivalencePoint.volumeMl;
+    return {
+      id: `half-equivalence-${index + 1}`,
+      type: "half-equivalence",
+      order: index + 1,
+      volumeMl,
+      relatedEquivalencePointIds: [equivalencePoint.id],
+    };
+  });
 }
 
 export function calculateCompositionEquivalencePoints(

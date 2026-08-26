@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createCharacteristicPointsFromEquivalencePoints,
+  createEquivalencePointsFromBoundaryPlan,
+  planSolutionTitrationBoundaries,
+} from "../../src/calculation";
+import {
   normalizeSolutionTitrationInput,
   validateSolutionTitrationInput,
 } from "../../src/chemistry";
@@ -346,7 +351,30 @@ describe("v1.2 production integration contracts (Phase 1 and later)", () => {
     ).toEqual(V12_CONTRACT_FIXTURES.K.expectedComponentAmountsMol);
     expect(normalized.pairing.direction).toBe("protonation");
   });
-  it.todo("builds Fixture K boundaries and characteristics in the shared planner");
+  it("builds Fixture K boundaries and characteristics in the shared planner", () => {
+    const normalized = normalizeSolutionTitrationInput(V12_CONTRACT_FIXTURES.K.input);
+    const planned = planSolutionTitrationBoundaries(normalized);
+    const equivalencePoints = createEquivalencePointsFromBoundaryPlan(
+      planned,
+      normalized.titrant.concentrationMolL,
+    );
+    const characteristicPoints =
+      createCharacteristicPointsFromEquivalencePoints(equivalencePoints);
+
+    expect(planned.boundaryPlan.stages.map((stage) => ({
+      incremental: stage.incrementalEquivalentMoles,
+      cumulative: stage.cumulativeEquivalentMoles,
+    }))).toEqual([
+      { incremental: 0.0015, cumulative: 0.0015 },
+      { incremental: 0.001, cumulative: 0.0025 },
+    ]);
+    expect(equivalencePoints.map(({ volumeMl }) => volumeMl)).toEqual(
+      V12_CONTRACT_FIXTURES.K.equivalenceVolumesMl,
+    );
+    expect(characteristicPoints.map(({ volumeMl }) => volumeMl)).toEqual(
+      V12_CONTRACT_FIXTURES.K.characteristicVolumesMl,
+    );
+  });
   it.todo("matches Fixture K golden pH in the shared solver");
   it.todo("samples all Fixture K anchors and both refinement targets");
   it.todo("renders and exports two Fixture K equivalence guides");
