@@ -250,9 +250,11 @@ export function planCompiledSolutionTitrationBoundaries(
 
 export function planSolutionTitrationBoundaries(
   input: NormalizedSolutionTitrationInput,
+  compiledAnalyte: CompiledSolutionComposition =
+    compileNormalizedAnalyteComposition(input),
 ): PlannedCompositionTitration {
   return planCompiledSolutionTitrationBoundaries(
-    compileNormalizedAnalyteComposition(input),
+    compiledAnalyte,
     input.pairing,
   );
 }

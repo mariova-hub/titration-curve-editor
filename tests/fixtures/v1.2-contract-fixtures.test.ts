@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  calculateTitrationCurve,
   createCharacteristicPointsFromEquivalencePoints,
   createEquivalencePointsFromBoundaryPlan,
   planSolutionTitrationBoundaries,
@@ -375,7 +376,19 @@ describe("v1.2 production integration contracts (Phase 1 and later)", () => {
       V12_CONTRACT_FIXTURES.K.characteristicVolumesMl,
     );
   });
-  it.todo("matches Fixture K golden pH in the shared solver");
+  it("matches Fixture K golden pH in the shared solver", () => {
+    const result = calculateTitrationCurve(V12_CONTRACT_FIXTURES.K.input);
+    const pHByVolume = new Map(
+      result.points.map(({ addedVolumeMl, pH }) => [addedVolumeMl, pH]),
+    );
+
+    for (const golden of V12_CONTRACT_FIXTURES.K.expectedPH) {
+      expect(pHByVolume.get(golden.volumeMl)).toBeCloseTo(
+        golden.pH,
+        V12_PH_TOLERANCE_DIGITS,
+      );
+    }
+  });
   it.todo("samples all Fixture K anchors and both refinement targets");
   it.todo("renders and exports two Fixture K equivalence guides");
   it.todo("uses 31.25 mL as Fixture K automatic range");

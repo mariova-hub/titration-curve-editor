@@ -244,12 +244,13 @@ describe("calculateTitrationCurve input dispatch", () => {
       .toBeCloseTo(7, 3);
   });
 
-  it("validates mixed input and then stops at an explicit Phase 1 boundary", () => {
-    expect(() => calculateTitrationCurve(V12_CONTRACT_FIXTURES.K.input)).toThrowError(
-      expect.objectContaining({
-        code: "unsupported-mixed-analyte-calculation",
-      }),
-    );
+  it("validates mixed input before dispatching it to the shared solver", () => {
+    const result = calculateTitrationCurve(V12_CONTRACT_FIXTURES.K.input);
+    expect(result.equivalencePoints.map(({ volumeMl }) => volumeMl)).toEqual([
+      15,
+      25,
+    ]);
+    expect(result.points.every(({ pH }) => Number.isFinite(pH))).toBe(true);
 
     const duplicate = V12_VALIDATION_CONTRACTS[0];
     if (duplicate.trigger.kind !== "solution-input") {

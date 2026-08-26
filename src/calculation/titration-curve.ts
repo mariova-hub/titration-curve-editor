@@ -1,7 +1,11 @@
 import {
   validateAnalyticalSystemInput,
 } from "../chemistry/chemical-system";
-import { validateSolutionTitrationInput } from "../chemistry/solution-titration-input";
+import {
+  compileNormalizedAnalyteComposition,
+  validateSolutionTitrationInput,
+  type NormalizedSolutionTitrationInput,
+} from "../chemistry/solution-titration-input";
 import { getSubstanceById } from "../chemistry/substances";
 import {
   isSolutionTitrationInput,
@@ -17,8 +21,16 @@ import {
 } from "../sampling";
 import { calculateEquivalencePoints, calculateHalfEquivalencePoints } from "./equivalence-points";
 import { CalculationError } from "./errors";
-import { calculateCompositionEquivalencePoints } from "./stoichiometric-boundaries";
-import { calculatePHAtVolume } from "./titration-solver";
+import {
+  createCharacteristicPointsFromEquivalencePoints,
+  createEquivalencePointsFromBoundaryPlan,
+  planSolutionTitrationBoundaries,
+  calculateCompositionEquivalencePoints,
+} from "./stoichiometric-boundaries";
+import {
+  calculateCompiledSolutionPHAtVolume,
+  calculatePHAtVolume,
+} from "./titration-solver";
 
 function calculateSingleAnalyteTitrationCurve(
   input: TitrationInput,
@@ -69,6 +81,56 @@ function calculateSingleAnalyteTitrationCurve(
   return { equivalencePoints, characteristicPoints, points };
 }
 
+function calculateSolutionTitrationCurve(
+  input: NormalizedSolutionTitrationInput,
+  options: SamplingOptions,
+): TitrationResult {
+  resolveSamplingOptions(options);
+  const compiledAnalyte = compileNormalizedAnalyteComposition(input);
+  const planned = planSolutionTitrationBoundaries(
+    input,
+    compiledAnalyte,
+  );
+
+  const phByVolume = new Map<number, number>();
+  const calculateOnce = (volumeMl: number): number => {
+    const cached = phByVolume.get(volumeMl);
+    if (cached !== undefined) return cached;
+    const pH = calculateCompiledSolutionPHAtVolume(
+      input,
+      compiledAnalyte,
+      volumeMl,
+    );
+    if (!Number.isFinite(pH)) {
+      throw new CalculationError(
+        "non-finite-residual",
+        `Non-finite pH at ${volumeMl} mL.`,
+      );
+    }
+    phByVolume.set(volumeMl, pH);
+    return pH;
+  };
+
+  const equivalencePoints = createEquivalencePointsFromBoundaryPlan(
+    planned,
+    input.titrant.concentrationMolL,
+  ).map((point) => ({ ...point, pH: calculateOnce(point.volumeMl) }));
+  const characteristicPoints =
+    createCharacteristicPointsFromEquivalencePoints(equivalencePoints)
+      .map((point) => ({ ...point, pH: calculateOnce(point.volumeMl) }));
+  const anchorVolumes = [
+    0,
+    ...characteristicPoints.map(({ volumeMl }) => volumeMl),
+    ...equivalencePoints.map(({ volumeMl }) => volumeMl),
+  ].sort((left, right) => left - right);
+  const points = [...new Set(anchorVolumes)].map((addedVolumeMl) => ({
+    addedVolumeMl,
+    pH: calculateOnce(addedVolumeMl),
+  }));
+
+  return { equivalencePoints, characteristicPoints, points };
+}
+
 export function calculateTitrationCurve<TInput extends TitrationCurveInput>(
   input: TInput,
   options: SamplingOptions = {},
@@ -85,8 +147,8 @@ export function calculateTitrationCurve<TInput extends TitrationCurveInput>(
     );
   }
 
-  throw new CalculationError(
-    "unsupported-mixed-analyte-calculation",
-    "混合分析溶液の曲線計算は後続Phaseで接続されます。",
+  return calculateSolutionTitrationCurve(
+    validation.normalizedInput,
+    options,
   );
 }

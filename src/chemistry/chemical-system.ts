@@ -1,6 +1,7 @@
 import type { ChemicalSpecies, Substance } from "../domain/chemistry";
 import type { CompiledSolutionComposition, QuantifiedSolutionComponent } from "../domain/solution-composition";
 import type { TitrationInput } from "../domain/titration";
+import type { NormalizedSolutionTitrationInput } from "./solution-titration-input";
 import type {
   SubstancePairValidator,
   ValidationResult,
@@ -223,5 +224,66 @@ export function buildAnalyticalSystem(
     system.families.push(...entries.families);
     system.fixedIons.push(...entries.fixedIons);
   }
+  return system;
+}
+
+/**
+ * Projects conserved mixed-analyte amounts and the current titrant amount into
+ * the existing equilibrium-system representation. Stoichiometric capacity
+ * sources are intentionally not equilibrium species.
+ */
+export function buildSolutionAnalyticalSystem(
+  input: NormalizedSolutionTitrationInput,
+  compiledAnalyte: CompiledSolutionComposition,
+  addedVolumeMl: number,
+): AnalyticalSystem {
+  if (!Number.isFinite(addedVolumeMl) || addedVolumeMl < 0) {
+    throw new RangeError("Added volume must be a non-negative finite number.");
+  }
+
+  const titrantMoles =
+    input.titrant.concentrationMolL * addedVolumeMl / 1000;
+  const totalVolumeL =
+    input.analyteSolutionVolumeL + addedVolumeMl / 1000;
+  if (!Number.isFinite(totalVolumeL) || totalVolumeL <= 0) {
+    throw new RangeError("Current total volume must be a positive finite number.");
+  }
+
+  const system: AnalyticalSystem = {
+    analyteMoles: input.components.reduce(
+      (total, component) => total + component.amountMol,
+      0,
+    ),
+    titrantMoles,
+    totalVolumeL,
+    families: [],
+    fixedIons: [],
+  };
+
+  const analyteEntries = buildCompiledAnalyticalEntries({
+    ...compiledAnalyte,
+    totalVolumeL,
+  });
+  system.families.push(...analyteEntries.families);
+  system.fixedIons.push(...analyteEntries.fixedIons);
+
+  if (input.titrant.substance.dissolvedComposition === undefined) {
+    addSubstanceComponent(system, input.titrant.substance, titrantMoles);
+  } else if (titrantMoles > 0) {
+    const compiledTitrant = compileSolutionComposition(
+      [
+        {
+          sourceComponentId: "titrant",
+          substanceId: input.titrant.substanceId,
+          amountMol: titrantMoles,
+        },
+      ],
+      totalVolumeL,
+    );
+    const titrantEntries = buildCompiledAnalyticalEntries(compiledTitrant);
+    system.families.push(...titrantEntries.families);
+    system.fixedIons.push(...titrantEntries.fixedIons);
+  }
+
   return system;
 }

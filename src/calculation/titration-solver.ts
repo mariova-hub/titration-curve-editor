@@ -1,5 +1,18 @@
-import { buildAnalyticalSystem, type AnalyticalSystem } from "../chemistry/chemical-system";
-import type { TitrationInput } from "../domain/titration";
+import {
+  buildAnalyticalSystem,
+  buildSolutionAnalyticalSystem,
+  type AnalyticalSystem,
+} from "../chemistry/chemical-system";
+import {
+  compileNormalizedAnalyteComposition,
+  normalizeSolutionTitrationInput,
+  type NormalizedSolutionTitrationInput,
+} from "../chemistry/solution-titration-input";
+import type { CompiledSolutionComposition } from "../domain/solution-composition";
+import {
+  isSolutionTitrationInput,
+  type TitrationCurveInput,
+} from "../domain/titration";
 import { evaluateChargeBalance, type ChargeBalanceEvaluation } from "./charge-balance";
 import { CalculationError } from "./errors";
 import { solveLogHydrogenByBisection } from "./root-finder";
@@ -11,21 +24,15 @@ export interface PHCalculationDetails {
   iterations: number;
 }
 
-export function calculatePHDetailsAtVolume(
-  input: TitrationInput,
-  addedVolumeMl: number,
+export function calculatePHDetailsForAnalyticalSystem(
+  system: AnalyticalSystem,
 ): PHCalculationDetails {
-  let system: AnalyticalSystem;
-  try {
-    system = buildAnalyticalSystem(input, addedVolumeMl);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid titration input.";
-    throw new CalculationError("invalid-input", message);
-  }
-
   const root = solveLogHydrogenByBisection((logH) => {
     const evaluation = evaluateChargeBalance(system, 10 ** logH);
-    return { residual: evaluation.residualMolL, scale: evaluation.concentrationScaleMolL };
+    return {
+      residual: evaluation.residualMolL,
+      scale: evaluation.concentrationScaleMolL,
+    };
   });
   const pH = -root.logH;
   const chargeBalance = evaluateChargeBalance(system, 10 ** root.logH);
@@ -36,8 +43,73 @@ export function calculatePHDetailsAtVolume(
   return { pH, system, chargeBalance, iterations: root.iterations };
 }
 
+export function calculateCompiledSolutionPHDetailsAtVolume(
+  input: NormalizedSolutionTitrationInput,
+  compiledAnalyte: CompiledSolutionComposition,
+  addedVolumeMl: number,
+): PHCalculationDetails {
+  let system: AnalyticalSystem;
+  try {
+    system = buildSolutionAnalyticalSystem(
+      input,
+      compiledAnalyte,
+      addedVolumeMl,
+    );
+  } catch (error) {
+    const message = error instanceof Error
+      ? error.message
+      : "Invalid solution titration input.";
+    throw new CalculationError("invalid-input", message);
+  }
+  return calculatePHDetailsForAnalyticalSystem(system);
+}
+
+export function calculateCompiledSolutionPHAtVolume(
+  input: NormalizedSolutionTitrationInput,
+  compiledAnalyte: CompiledSolutionComposition,
+  addedVolumeMl: number,
+): number {
+  return calculateCompiledSolutionPHDetailsAtVolume(
+    input,
+    compiledAnalyte,
+    addedVolumeMl,
+  ).pH;
+}
+
+export function calculatePHDetailsAtVolume(
+  input: TitrationCurveInput,
+  addedVolumeMl: number,
+): PHCalculationDetails {
+  if (isSolutionTitrationInput(input)) {
+    let normalized: NormalizedSolutionTitrationInput;
+    try {
+      normalized = normalizeSolutionTitrationInput(input);
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : "Invalid solution titration input.";
+      throw new CalculationError("invalid-input", message);
+    }
+    return calculateCompiledSolutionPHDetailsAtVolume(
+      normalized,
+      compileNormalizedAnalyteComposition(normalized),
+      addedVolumeMl,
+    );
+  }
+
+  let system: AnalyticalSystem;
+  try {
+    system = buildAnalyticalSystem(input, addedVolumeMl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid titration input.";
+    throw new CalculationError("invalid-input", message);
+  }
+
+  return calculatePHDetailsForAnalyticalSystem(system);
+}
+
 export function calculatePHAtVolume(
-  input: TitrationInput,
+  input: TitrationCurveInput,
   addedVolumeMl: number,
 ): number {
   return calculatePHDetailsAtVolume(input, addedVolumeMl).pH;
