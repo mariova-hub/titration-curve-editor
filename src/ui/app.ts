@@ -11,6 +11,15 @@ import {
   type PngExportScale,
 } from "../export";
 import {
+  canSaveProject,
+  DEFAULT_TCURVE_FILENAME,
+  downloadProjectFile,
+  parseTcurveFile,
+  projectFileErrorMessage,
+  restoreProjectState,
+  TCURVE_FILE_ACCEPT,
+} from "../project";
+import {
   calculateNiceTickInterval,
   FONT_FAMILY_PRESETS,
   type FontFamilyPreset,
@@ -352,6 +361,19 @@ export const APP_TEMPLATE = `
         </details>
 
         <details open>
+          <summary>プロジェクト</summary>
+          <div class="section-content">
+            <label for="project-filename">プロジェクトファイル名</label>
+            <input id="project-filename" type="text" value="${DEFAULT_TCURVE_FILENAME}" />
+            <button type="button" id="save-project" class="primary-button">プロジェクトを保存</button>
+            <button type="button" id="open-project" class="secondary-button">プロジェクトを開く</button>
+            <input id="project-file-input" type="file" accept="${TCURVE_FILE_ACCEPT}" hidden />
+            <p id="project-file-status" class="field-error error-summary" role="status" aria-live="polite"></p>
+            <p class="control-help">滴定条件と図版設定を編集可能な .tcurve ファイルとして保存します。</p>
+          </div>
+        </details>
+
+        <details open>
           <summary>出力</summary>
           <div class="section-content">
             <label for="export-filename">SVGファイル名</label>
@@ -468,6 +490,7 @@ export function mountApp(root: HTMLElement): void {
   ];
   let pngExportInProgress = false;
   let pngExportError = "";
+  let projectFileStatus = "";
 
   const draftControls: ReadonlyArray<{
     id: string;
@@ -663,6 +686,8 @@ export function mountApp(root: HTMLElement): void {
       button.textContent = pngExportInProgress ? "PNGを生成中…" : "PNGを書き出す";
     }
     requiredElement<HTMLElement>(root, "error-png-export").textContent = pngExportError;
+    requiredElement<HTMLButtonElement>(root, "save-project").disabled = !canSaveProject(state);
+    requiredElement<HTMLElement>(root, "project-file-status").textContent = projectFileStatus;
     requiredElement<HTMLElement>(root, "point-summary").textContent = result === null
       ? ""
       : `計算点 ${result.points.length}点 / 当量点 ${result.equivalencePoints.length}点`;
@@ -908,6 +933,41 @@ export function mountApp(root: HTMLElement): void {
   requiredElement<HTMLSelectElement>(root, "png-export-background").addEventListener("change", (event) => {
     const background = (event.currentTarget as HTMLSelectElement).value as PngBackgroundMode;
     commit(updatePngExportOptions(state, { background }));
+  });
+
+  requiredElement<HTMLButtonElement>(root, "save-project").addEventListener("click", () => {
+    try {
+      const filename = requiredElement<HTMLInputElement>(root, "project-filename").value;
+      downloadProjectFile(state, filename);
+      projectFileStatus = "プロジェクトを保存しました。";
+    } catch (error) {
+      console.error("Project save failed.", error);
+      projectFileStatus = "現在のプロジェクトを保存できませんでした。設定を確認してください。";
+    }
+    syncControls();
+  });
+
+  const projectFileInput = requiredElement<HTMLInputElement>(root, "project-file-input");
+  requiredElement<HTMLButtonElement>(root, "open-project").addEventListener("click", () => {
+    projectFileInput.click();
+  });
+  projectFileInput.addEventListener("change", () => {
+    const file = projectFileInput.files?.[0];
+    if (file === undefined) return;
+    void (async () => {
+      try {
+        const project = parseTcurveFile(await file.text());
+        const restored = restoreProjectState(project);
+        projectFileStatus = "プロジェクトを開きました。";
+        commit(restored);
+      } catch (error) {
+        console.error("Project load failed.", error);
+        projectFileStatus = projectFileErrorMessage(error);
+        syncControls();
+      } finally {
+        projectFileInput.value = "";
+      }
+    })();
   });
 
   const handleExport = (): void => {
