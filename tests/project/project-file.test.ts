@@ -83,7 +83,7 @@ describe(".tcurve schema 1 serialization", () => {
 
     expect(project).toMatchObject({
       schemaVersion: 1,
-      appVersion: "1.2.0",
+      appVersion: packageMetadata.version,
       savedAt: FIXED_SAVED_AT,
       state: {
         input: {
@@ -148,7 +148,7 @@ describe(".tcurve schema 1 serialization", () => {
 
     expect(APP_VERSION).toBe(packageMetadata.version);
     expect(project.appVersion).toBe(packageMetadata.version);
-    expect(project.appVersion).toBe("1.2.0");
+    expect(parseTcurveFile(JSON.stringify(project)).appVersion).toBe(packageMetadata.version);
     expect(TCURVE_SCHEMA_VERSION).toBe(1);
   });
 

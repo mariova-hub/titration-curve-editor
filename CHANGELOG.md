@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.3.0] - 2026-08-29
+
+### Added
+
+- 編集中の滴定条件と図版設定をJSONベースの`.tcurve`プロジェクトとして保存する機能
+- `.tcurve`プロジェクトを開き、通常の1成分滴定または2成分mixed analyte滴定の編集を再開する機能
+- 分析物質、濃度、体積、滴定液、グラフ・描画設定のround-trip
+- 壊れたファイル、不正な内容、未知の物質、未対応schemaを安全に拒否するproject-file validation
+
+### Changed
+
+- プロジェクト読込時に、保存された入力と設定からproduction calculationを再実行して曲線とPreviewを再生成
+- `.tcurve`を編集再開用、SVG / PNGを完成図の出力用として区別
+
+### Notes
+
+- `.tcurve`初版のschema versionは1で、app version metadataとは独立して管理します。
+- 計算済みの曲線、solver中間状態、SVG文字列、PNG binaryは`.tcurve`へ保存しません。
+- 現在のアプリより新しい未対応schemaのプロジェクトは開けません。
+
 ## [1.2.0] - 2026-08-26
 
 ### Added
