@@ -39,6 +39,9 @@ describe("chemical formula display formatting", () => {
       "NH3",
       "Na2CO3",
       "NaHCO3",
+      "C2H6ClNO2",
+      "C5H10ClNO4",
+      "C6H16Cl2N2O2",
     ]);
   });
 });

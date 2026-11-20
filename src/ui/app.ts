@@ -1,3 +1,4 @@
+import { getSubstanceById } from "../chemistry/substances";
 import type {
   AxisLabelOrientation,
   AxisStyle,
@@ -50,6 +51,7 @@ import {
 } from "./state";
 import { exportPngFromState } from "./png-export-action";
 import { createSubstanceSelectionGroups } from "./substance-options";
+import { renderAminoAcidDetails } from "./amino-acid-details";
 
 const PATTERNS: ReadonlyArray<{ value: LinePattern; label: string }> = [
   { value: "solid", label: "実線" },
@@ -160,6 +162,7 @@ export const APP_TEMPLATE = `
               <legend>滴下する水溶液</legend>
               <label for="titrant-substance">物質</label>
               <select id="titrant-substance" data-draft-field="titrantSubstanceId"></select>
+              <p id="amino-acid-titrant-note" class="control-help" hidden>アミノ酸の塩酸塩を、水酸化ナトリウムで滴定します。</p>
               <p class="field-error" id="error-titrant-substance" aria-live="polite"></p>
 
               <label for="titrant-concentration">モル濃度 <span>mol/L</span></label>
@@ -410,6 +413,10 @@ export const APP_TEMPLATE = `
         </div>
         <p id="error-calculation" class="field-error error-summary" role="alert"></p>
         <div id="preview-canvas" class="preview-canvas" aria-label="滴定曲線のプレビュー"></div>
+        <details id="amino-acid-details" hidden>
+          <summary>アミノ酸の pKa・pI・化学種</summary>
+          <div id="amino-acid-content" class="amino-acid-content"></div>
+        </details>
         <div class="preview-footer">
           <span id="point-summary"></span>
           <div class="export-button-row">
@@ -436,10 +443,12 @@ function setCheckbox(element: HTMLInputElement, checked: boolean): void {
   if (element.checked !== checked) element.checked = checked;
 }
 
-function populateSubstances(select: HTMLSelectElement): void {
+function populateSubstances(select: HTMLSelectElement, includeAminoAcids = false): void {
   select.replaceChildren();
   for (const selectionGroup of createSubstanceSelectionGroups()) {
+    if (selectionGroup.id === "amino-acid" && !includeAminoAcids) continue;
     const group = document.createElement("optgroup");
+    group.dataset.category = selectionGroup.id;
     group.label = selectionGroup.label;
     for (const substance of selectionGroup.options) {
       const option = document.createElement("option");
@@ -473,12 +482,15 @@ export function mountApp(root: HTMLElement): void {
     "analyte-component-2-substance",
   );
   const titrantSelect = requiredElement<HTMLSelectElement>(root, "titrant-substance");
-  populateSubstances(analyteSelect);
+  populateSubstances(analyteSelect, true);
   populateSubstances(analyteComponent2Select);
   populateSubstances(titrantSelect);
 
   let state = createAppState();
   const preview = requiredElement<HTMLElement>(root, "preview-canvas");
+  const aminoAcidGroup = analyteSelect.querySelector<HTMLOptGroupElement>('optgroup[data-category="amino-acid"]')!;
+  const aminoAcidDetails = requiredElement<HTMLDetailsElement>(root, "amino-acid-details");
+  const aminoAcidContent = requiredElement<HTMLElement>(root, "amino-acid-content");
   const status = requiredElement<HTMLElement>(root, "calculation-status");
   const exportButtons = [
     requiredElement<HTMLButtonElement>(root, "export-svg"),
@@ -572,10 +584,15 @@ export function mountApp(root: HTMLElement): void {
   function syncControls(): void {
     const { draft, result, status: chemicalStatus, previewIsStale } = state.chemical;
     const hasSecondComponent = hasSecondAnalyteComponent(draft);
+    const analyte = getSubstanceById(draft.analyteSubstanceId);
+    const aminoAcidSelected = analyte?.aminoAcid !== undefined;
+    aminoAcidGroup.disabled = hasSecondComponent;
+    titrantSelect.disabled = aminoAcidSelected;
+    requiredElement<HTMLElement>(root, "amino-acid-titrant-note").hidden = !aminoAcidSelected;
     requiredElement<HTMLElement>(root, "analyte-component-2").hidden =
       !hasSecondComponent;
     requiredElement<HTMLButtonElement>(root, "add-analyte-component").hidden =
-      hasSecondComponent;
+      hasSecondComponent || aminoAcidSelected;
     requiredElement<HTMLElement>(root, "analyte-substance-label").textContent =
       hasSecondComponent ? "分析物質 1" : "物質";
     requiredElement<HTMLElement>(root, "analyte-concentration-label").innerHTML =
@@ -623,6 +640,11 @@ export function mountApp(root: HTMLElement): void {
     } else {
       // Only the escaped, deterministic output of renderTitrationSvg is inserted here.
       preview.innerHTML = state.rendering.svgString;
+    }
+    aminoAcidDetails.hidden = !aminoAcidSelected || chemicalStatus !== "success" ||
+      result === null || state.rendering.error !== null;
+    if (!aminoAcidDetails.hidden && analyte !== undefined && result !== null) {
+      renderAminoAcidDetails(aminoAcidContent, analyte, result);
     }
 
     const style = state.rendering.graphStyle;

@@ -18,8 +18,7 @@ function requireSubstance(id: string): Substance {
 }
 
 describe("v1.1 salt substance master", () => {
-  it("registers Na2CO3 and NaHCO3 exactly once in a fourteen-substance master", () => {
-    expect(SUBSTANCES).toHaveLength(14);
+  it("registers Na2CO3 and NaHCO3 exactly once in the substance master", () => {
     expect(SUBSTANCES.filter(({ id }) => id === "na2co3")).toHaveLength(1);
     expect(SUBSTANCES.filter(({ id }) => id === "nahco3")).toHaveLength(1);
     expect(new Set(SUBSTANCES.map(({ id }) => id)).size).toBe(SUBSTANCES.length);

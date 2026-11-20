@@ -23,6 +23,7 @@ const GROUPS: ReadonlyArray<{
   { id: "acid", label: "酸" },
   { id: "base", label: "塩基" },
   { id: "salt-or-amphiprotic", label: "塩・両性種" },
+  { id: "amino-acid", label: "アミノ酸（酸性側から滴定）" },
 ];
 
 export function getPresentationSelectionCategory(
@@ -46,5 +47,5 @@ export function createSubstanceSelectionGroups(
         id: substance.id,
         label: `${substance.displayNameJa} (${formatChemicalFormulaForDisplay(substance.formula)})`,
       })),
-  }));
+  })).filter(({ options }) => options.length > 0);
 }

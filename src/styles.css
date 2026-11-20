@@ -272,6 +272,19 @@ label span, .control-help { color: #697681; font-weight: 500; }
 
 .preview-panel > .error-summary { margin: 0.75rem 1rem 0; }
 
+#amino-acid-details { border-top: 1px solid #e1e5e9; }
+
+.amino-acid-content {
+  max-height: min(22rem, 42vh);
+  overflow: auto;
+  padding: 0 1rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.amino-acid-content p { margin: 0.4rem 0; }
+.amino-acid-content ul, .amino-acid-content ol { padding-inline-start: 1.5rem; }
+.amino-acid-content li { margin-block: 0.25rem; }
+
 .preview-canvas {
   display: grid;
   min-height: 0;
@@ -315,6 +328,7 @@ label span, .control-help { color: #697681; font-weight: 500; }
   .editor-layout { grid-template-columns: 1fr; height: auto; }
   .controls-panel { max-height: none; }
   .preview-panel { min-height: 32rem; }
+  .amino-acid-content { max-height: none; }
 }
 
 @media (max-width: 520px) {

@@ -33,8 +33,7 @@ function getStrongHydroxide(substanceId: string): StrongHydroxideModel {
 }
 
 describe("substance master", () => {
-  it("contains the fourteen v1.1 substances", () => {
-    expect(SUBSTANCES).toHaveLength(14);
+  it("retains the fourteen v1.1 substances and adds the three amino acid hydrochlorides", () => {
     expect(SUBSTANCES.map(({ formula }) => formula)).toEqual([
       "HCl",
       "HNO3",
@@ -50,6 +49,9 @@ describe("substance master", () => {
       "NH3",
       "Na2CO3",
       "NaHCO3",
+      "C2H6ClNO2",
+      "C5H10ClNO4",
+      "C6H16Cl2N2O2",
     ]);
   });
 

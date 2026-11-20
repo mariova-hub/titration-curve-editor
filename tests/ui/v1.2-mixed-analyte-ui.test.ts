@@ -177,10 +177,10 @@ describe("v1.2 mixed analyte DOM contract", () => {
     expect(APP_TEMPLATE.match(/id="analyte-volume"/g)).toHaveLength(1);
   });
 
-  it("reuses the same fourteen-option presentation model", () => {
-    const options = createSubstanceSelectionGroups().flatMap(
-      ({ options: groupOptions }) => groupOptions,
-    );
+  it("retains the fourteen options available for mixed analytes", () => {
+    const options = createSubstanceSelectionGroups()
+      .filter(({ id }) => id !== "amino-acid")
+      .flatMap(({ options: groupOptions }) => groupOptions);
     expect(options).toHaveLength(14);
     expect(new Set(options.map(({ id }) => id)).size).toBe(14);
   });

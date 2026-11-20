@@ -1,5 +1,6 @@
 import {
   SUBSTANCES,
+  getSubstanceById,
   validateAnalyticalSystemInput,
   validateSolutionTitrationInput,
   type SolutionTitrationValidationError,
@@ -449,6 +450,9 @@ export function updateTitrationDraft(
   dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
 ): AppState {
   const draft = { ...state.chemical.draft, [field]: value };
+  if (field === "analyteSubstanceId" && getSubstanceById(value)?.aminoAcid !== undefined) {
+    draft.titrantSubstanceId = "naoh";
+  }
   const forcedMaxVolumeMl = state.rendering.xRangeMode === "manual"
     ? state.rendering.graphStyle.xMax
     : undefined;
@@ -460,6 +464,7 @@ export function addAnalyteComponent(
   dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
 ): AppState {
   if (hasSecondAnalyteComponent(state.chemical.draft)) return state;
+  if (getSubstanceById(state.chemical.draft.analyteSubstanceId)?.aminoAcid !== undefined) return state;
   const secondSubstanceId = SUBSTANCES.find(
     ({ id }) => id !== state.chemical.draft.analyteSubstanceId,
   )?.id ?? state.chemical.draft.analyteSubstanceId;

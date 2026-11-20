@@ -1,5 +1,6 @@
 import type {
   AcidBaseFamily,
+  ChemicalConstantSource,
   ChemicalSpecies,
   CompleteDissociationStep,
   CompleteIon,
@@ -9,7 +10,7 @@ import type {
   Substance,
 } from "../domain/chemistry";
 import { ACID_DISSOCIATION_CONSTANTS } from "./constants";
-import { SODIUM_FIXED_ION_ID } from "./fixed-ions";
+import { CHLORIDE_FIXED_ION_ID, SODIUM_FIXED_ION_ID } from "./fixed-ions";
 
 function createSpecies(
   id: string,
@@ -419,6 +420,102 @@ const ammonia = createProtonationFamilySubstance({
   },
 });
 
+const aminoAcidSource: ChemicalConstantSource = {
+  id: "openstax-organic-chemistry-26-1",
+  title: "OpenStax Organic Chemistry, Structures of Amino Acids",
+  url: "https://openstax.org/books/organic-chemistry/pages/26-1-structures-of-amino-acids",
+  citation: "John McMurry, Organic Chemistry, Table 26.1",
+};
+const aminoAcidReviewedAt = "2026-11-21";
+
+function createAminoAcidHydrochloride(definition: {
+  id: string;
+  displayNameJa: string;
+  formula: string;
+  protonatedCharge: 1 | 2;
+  speciesFormulas: readonly string[];
+  steps: readonly { pKa: number; site: string }[];
+}): Substance {
+  const { id, displayNameJa, formula, protonatedCharge, speciesFormulas, steps } = definition;
+  const species = speciesFormulas.map((speciesFormula, index) =>
+    createSpecies(`${id}.h${steps.length - index}`, speciesFormula, protonatedCharge - index, steps.length - index),
+  );
+  const family: AcidBaseFamily = {
+    id,
+    protonCount: steps.length,
+    species,
+    dissociationSteps: steps.map(({ pKa }, index) =>
+      createEquilibriumStep(`${id}.step${index + 1}`, index + 1, species[index]!.id, species[index + 1]!.id, {
+        status: "confirmed",
+        kind: "Ka",
+        value: 10 ** -pKa,
+        temperatureC: 25,
+        source: aminoAcidSource,
+        reviewedAt: aminoAcidReviewedAt,
+      }),
+    ),
+  };
+  return {
+    id,
+    displayNameJa,
+    formula,
+    roles: ["acid"],
+    selectionCategory: "amino-acid",
+    aminoAcid: { dissociationSites: steps.map(({ site }) => site) },
+    acidBaseModel: { kind: "protonation-family", family },
+    dissolvedComposition: {
+      familyComponents: [{ familyId: id, initialSpeciesId: species[0]!.id, stoichiometryPerFormulaUnit: 1 }],
+      fixedIons: [{ speciesId: CHLORIDE_FIXED_ION_ID, stoichiometryPerFormulaUnit: protonatedCharge }],
+    },
+    provenance: { status: "reviewed", sourceId: aminoAcidSource.id, reviewedAt: aminoAcidReviewedAt },
+  };
+}
+
+const glycine = createAminoAcidHydrochloride({
+  id: "glycine",
+  displayNameJa: "グリシン（塩酸塩）",
+  formula: "C2H6ClNO2",
+  protonatedCharge: 1,
+  speciesFormulas: ["⁺H3N–CH2–COOH", "⁺H3N–CH2–COO⁻", "H2N–CH2–COO⁻"],
+  steps: [{ pKa: 2.34, site: "α-カルボキシ基" }, { pKa: 9.60, site: "α-アンモニウム基" }],
+});
+
+const glutamicAcid = createAminoAcidHydrochloride({
+  id: "glutamic-acid",
+  displayNameJa: "グルタミン酸（塩酸塩）",
+  formula: "C5H10ClNO4",
+  protonatedCharge: 1,
+  speciesFormulas: [
+    "⁺H3N–CH(CH2CH2COOH)–COOH",
+    "⁺H3N–CH(CH2CH2COOH)–COO⁻",
+    "⁺H3N–CH(CH2CH2COO⁻)–COO⁻",
+    "H2N–CH(CH2CH2COO⁻)–COO⁻",
+  ],
+  steps: [
+    { pKa: 2.19, site: "α-カルボキシ基" },
+    { pKa: 4.25, site: "側鎖カルボキシ基" },
+    { pKa: 9.67, site: "α-アンモニウム基" },
+  ],
+});
+
+const lysine = createAminoAcidHydrochloride({
+  id: "lysine",
+  displayNameJa: "リシン（二塩酸塩）",
+  formula: "C6H16Cl2N2O2",
+  protonatedCharge: 2,
+  speciesFormulas: [
+    "⁺H3N–CH((CH2)4NH3⁺)–COOH",
+    "⁺H3N–CH((CH2)4NH3⁺)–COO⁻",
+    "H2N–CH((CH2)4NH3⁺)–COO⁻",
+    "H2N–CH((CH2)4NH2)–COO⁻",
+  ],
+  steps: [
+    { pKa: 2.18, site: "α-カルボキシ基" },
+    { pKa: 8.95, site: "α-アンモニウム基" },
+    { pKa: 10.53, site: "側鎖アンモニウム基" },
+  ],
+});
+
 export const SUBSTANCES: readonly Substance[] = [
   hcl,
   hno3,
@@ -434,6 +531,9 @@ export const SUBSTANCES: readonly Substance[] = [
   ammonia,
   sodiumCarbonate,
   sodiumHydrogenCarbonate,
+  glycine,
+  glutamicAcid,
+  lysine,
 ];
 
 const substanceById = new Map(

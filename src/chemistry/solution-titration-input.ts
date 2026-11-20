@@ -246,6 +246,13 @@ export function validateSolutionTitrationInput(
         "分析物質の物質IDが物質マスターに登録されていません。",
       );
     }
+    if (substance.aminoAcid !== undefined) {
+      return invalid(
+        "unsupported-analyte-component",
+        `analyteSolution.components.${index}.substanceId`,
+        "アミノ酸は1成分で水酸化ナトリウムにより滴定してください。",
+      );
+    }
     substances.push(substance);
   }
   const titrantSubstance = getSubstanceById(input.titrantSubstanceId);
@@ -255,6 +262,9 @@ export function validateSolutionTitrationInput(
       "titrantSubstanceId",
       "滴下する水溶液の物質IDが物質マスターに登録されていません。",
     );
+  }
+  if (titrantSubstance.aminoAcid !== undefined) {
+    return invalid("incompatible-acid-base-pair", "titrantSubstanceId", "滴下液には対応する酸または塩基を選んでください。");
   }
 
   const substanceIds = new Set<string>();

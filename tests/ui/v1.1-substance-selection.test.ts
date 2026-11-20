@@ -28,16 +28,13 @@ function draftFor(
 }
 
 describe("v1.1 substance selection presentation", () => {
-  it("provides 14 unique options to both analyte and titrant selects", () => {
-    const analyteGroups = createSubstanceSelectionGroups();
-    const titrantGroups = createSubstanceSelectionGroups();
-
-    for (const groups of [analyteGroups, titrantGroups]) {
-      const ids = groups.flatMap(({ options }) => options.map(({ id }) => id));
-      expect(ids).toHaveLength(14);
-      expect(new Set(ids).size).toBe(14);
-      expect(ids).toEqual(SUBSTANCES.map(({ id }) => id));
-    }
+  it("groups every substance once and lists the targeted amino acids together", () => {
+    const groups = createSubstanceSelectionGroups();
+    const ids = groups.flatMap(({ options }) => options.map(({ id }) => id));
+    expect(ids).toEqual(SUBSTANCES.map(({ id }) => id));
+    expect(new Set(ids).size).toBe(17);
+    expect(groups.find(({ id }) => id === "amino-acid")?.options.map(({ id }) => id))
+      .toEqual(["glycine", "glutamic-acid", "lysine"]);
   });
 
   it("places both salts once in the salt/amphiprotic group", () => {
@@ -46,6 +43,7 @@ describe("v1.1 substance selection presentation", () => {
       "酸",
       "塩基",
       "塩・両性種",
+      "アミノ酸（酸性側から滴定）",
     ]);
     const saltGroup = groups.find(({ id }) => id === "salt-or-amphiprotic");
 
@@ -68,7 +66,7 @@ describe("v1.1 substance selection presentation", () => {
 
   it("uses legacy roles only as a presentation fallback for the existing 12 substances", () => {
     const existing = SUBSTANCES.filter(
-      ({ id }) => id !== "na2co3" && id !== "nahco3",
+      ({ id, aminoAcid }) => id !== "na2co3" && id !== "nahco3" && aminoAcid === undefined,
     );
     expect(existing).toHaveLength(12);
     expect(existing.every(({ selectionCategory }) => selectionCategory === undefined)).toBe(true);

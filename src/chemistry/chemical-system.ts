@@ -1,6 +1,7 @@
 import type { ChemicalSpecies, Substance } from "../domain/chemistry";
 import type { CompiledSolutionComposition, QuantifiedSolutionComponent } from "../domain/solution-composition";
 import type { TitrationInput } from "../domain/titration";
+import { INCOMPATIBLE_ACID_BASE_PAIR } from "../domain/stoichiometry";
 import type { NormalizedSolutionTitrationInput } from "./solution-titration-input";
 import type {
   SubstancePairValidator,
@@ -91,6 +92,9 @@ export function buildCompiledAnalyticalEntries(
 }
 
 const validateDerivedPair: SubstancePairValidator = (analyte, titrant) => {
+  if (titrant.aminoAcid !== undefined || (analyte.aminoAcid !== undefined && titrant.id !== "naoh")) {
+    return INCOMPATIBLE_ACID_BASE_PAIR;
+  }
   const pairing = resolveSubstanceProtonTransferPairing(analyte, titrant);
   return pairing.status === "supported" ? undefined : pairing.code;
 };

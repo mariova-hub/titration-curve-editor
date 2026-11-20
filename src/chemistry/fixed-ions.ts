@@ -9,6 +9,7 @@ export interface FixedIon {
 }
 
 export const SODIUM_FIXED_ION_ID = "ion.na" as const satisfies FixedIonId;
+export const CHLORIDE_FIXED_ION_ID = "ion.cl" as const satisfies FixedIonId;
 
 const sodiumIon = {
   id: SODIUM_FIXED_ION_ID,
@@ -17,7 +18,15 @@ const sodiumIon = {
   boundProtonCount: 0,
 } as const satisfies FixedIon;
 
-export const FIXED_IONS: readonly FixedIon[] = [sodiumIon];
+export const FIXED_IONS: readonly FixedIon[] = [
+  sodiumIon,
+  {
+    id: CHLORIDE_FIXED_ION_ID,
+    formula: "Cl-",
+    charge: -1,
+    boundProtonCount: 0,
+  },
+];
 
 const fixedIonById = new Map<string, FixedIon>(
   FIXED_IONS.map((fixedIon) => [fixedIon.id, fixedIon]),

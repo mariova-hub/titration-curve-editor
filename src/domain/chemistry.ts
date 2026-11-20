@@ -7,7 +7,8 @@ export type AcidBaseRole = "acid" | "base";
 export type SubstanceSelectionCategory =
   | "acid"
   | "base"
-  | "salt-or-amphiprotic";
+  | "salt-or-amphiprotic"
+  | "amino-acid";
 
 export interface ChemicalSpecies {
   id: string;
@@ -108,6 +109,7 @@ export interface Substance {
   roles: AcidBaseRole[];
   dissolvedComposition?: DissolvedComposition;
   selectionCategory?: SubstanceSelectionCategory;
+  aminoAcid?: { dissociationSites: readonly string[] };
   acidBaseModel: SubstanceAcidBaseModel;
   provenance: SubstanceProvenance;
 }
