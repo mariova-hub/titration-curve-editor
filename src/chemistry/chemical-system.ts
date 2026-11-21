@@ -92,7 +92,10 @@ export function buildCompiledAnalyticalEntries(
 }
 
 const validateDerivedPair: SubstancePairValidator = (analyte, titrant) => {
-  if (titrant.aminoAcid !== undefined || (analyte.aminoAcid !== undefined && titrant.id !== "naoh")) {
+  if (
+    (titrant.aminoAcid !== undefined && analyte.id !== "naoh") ||
+    (analyte.aminoAcid !== undefined && titrant.id !== "naoh")
+  ) {
     return INCOMPATIBLE_ACID_BASE_PAIR;
   }
   const pairing = resolveSubstanceProtonTransferPairing(analyte, titrant);

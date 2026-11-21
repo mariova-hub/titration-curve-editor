@@ -66,7 +66,10 @@ function calculateSingleAnalyteTitrationCurve(
     equivalencePoints,
     calculateOnce,
   );
-  const maxVolumeMl = determineMaxVolumeMl(equivalencePoints, options.maxVolumeMl);
+  const aminoAcidTitrant = getSubstanceById(input.titrantSubstanceId)?.aminoAcid !== undefined;
+  // Show the last buffer midpoint beyond the final equivalence volume.
+  const reverseMaxVolumeMl = aminoAcidTitrant ? characteristicPoints.at(-1)!.volumeMl * 1.25 : undefined;
+  const maxVolumeMl = determineMaxVolumeMl(equivalencePoints, options.maxVolumeMl ?? reverseMaxVolumeMl);
   const samplingVolumes = generateSamplingVolumes(
     maxVolumeMl,
     equivalencePoints,

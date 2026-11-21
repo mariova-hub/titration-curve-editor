@@ -43,7 +43,7 @@ describe("v1.1 substance selection presentation", () => {
       "酸",
       "塩基",
       "塩・両性種",
-      "アミノ酸（酸性側から滴定）",
+      "アミノ酸の塩酸塩",
     ]);
     const saltGroup = groups.find(({ id }) => id === "salt-or-amphiprotic");
 

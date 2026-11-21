@@ -23,7 +23,7 @@ const GROUPS: ReadonlyArray<{
   { id: "acid", label: "酸" },
   { id: "base", label: "塩基" },
   { id: "salt-or-amphiprotic", label: "塩・両性種" },
-  { id: "amino-acid", label: "アミノ酸（酸性側から滴定）" },
+  { id: "amino-acid", label: "アミノ酸の塩酸塩" },
 ];
 
 export function getPresentationSelectionCategory(

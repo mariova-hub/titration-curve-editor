@@ -484,11 +484,13 @@ export function mountApp(root: HTMLElement): void {
   const titrantSelect = requiredElement<HTMLSelectElement>(root, "titrant-substance");
   populateSubstances(analyteSelect, true);
   populateSubstances(analyteComponent2Select);
-  populateSubstances(titrantSelect);
+  populateSubstances(titrantSelect, true);
 
   let state = createAppState();
   const preview = requiredElement<HTMLElement>(root, "preview-canvas");
-  const aminoAcidGroup = analyteSelect.querySelector<HTMLOptGroupElement>('optgroup[data-category="amino-acid"]')!;
+  const analyteAminoAcidGroup = analyteSelect.querySelector<HTMLOptGroupElement>('optgroup[data-category="amino-acid"]')!;
+  const titrantAminoAcidGroup = titrantSelect.querySelector<HTMLOptGroupElement>('optgroup[data-category="amino-acid"]')!;
+  const aminoAcidNote = requiredElement<HTMLElement>(root, "amino-acid-titrant-note");
   const aminoAcidDetails = requiredElement<HTMLDetailsElement>(root, "amino-acid-details");
   const aminoAcidContent = requiredElement<HTMLElement>(root, "amino-acid-content");
   const status = requiredElement<HTMLElement>(root, "calculation-status");
@@ -585,10 +587,18 @@ export function mountApp(root: HTMLElement): void {
     const { draft, result, status: chemicalStatus, previewIsStale } = state.chemical;
     const hasSecondComponent = hasSecondAnalyteComponent(draft);
     const analyte = getSubstanceById(draft.analyteSubstanceId);
-    const aminoAcidSelected = analyte?.aminoAcid !== undefined;
-    aminoAcidGroup.disabled = hasSecondComponent;
-    titrantSelect.disabled = aminoAcidSelected;
-    requiredElement<HTMLElement>(root, "amino-acid-titrant-note").hidden = !aminoAcidSelected;
+    const titrant = getSubstanceById(draft.titrantSubstanceId);
+    const aminoAcidAnalyte = analyte?.aminoAcid !== undefined;
+    const aminoAcidTitrant = titrant?.aminoAcid !== undefined;
+    const aminoAcidSelected = aminoAcidAnalyte || aminoAcidTitrant;
+    analyteAminoAcidGroup.disabled = hasSecondComponent;
+    titrantAminoAcidGroup.disabled = hasSecondComponent;
+    analyteSelect.disabled = aminoAcidTitrant;
+    titrantSelect.disabled = aminoAcidAnalyte;
+    aminoAcidNote.hidden = !aminoAcidSelected;
+    aminoAcidNote.textContent = aminoAcidTitrant
+      ? "水酸化ナトリウム水溶液にアミノ酸の塩酸塩を滴下します。"
+      : "アミノ酸の塩酸塩を、水酸化ナトリウムで滴定します。";
     requiredElement<HTMLElement>(root, "analyte-component-2").hidden =
       !hasSecondComponent;
     requiredElement<HTMLButtonElement>(root, "add-analyte-component").hidden =
@@ -643,8 +653,9 @@ export function mountApp(root: HTMLElement): void {
     }
     aminoAcidDetails.hidden = !aminoAcidSelected || chemicalStatus !== "success" ||
       result === null || state.rendering.error !== null;
-    if (!aminoAcidDetails.hidden && analyte !== undefined && result !== null) {
-      renderAminoAcidDetails(aminoAcidContent, analyte, result);
+    const aminoAcidSubstance = aminoAcidTitrant ? titrant : analyte;
+    if (!aminoAcidDetails.hidden && aminoAcidSubstance !== undefined && result !== null) {
+      renderAminoAcidDetails(aminoAcidContent, aminoAcidSubstance, result, aminoAcidTitrant);
     }
 
     const style = state.rendering.graphStyle;

@@ -450,8 +450,12 @@ export function updateTitrationDraft(
   dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
 ): AppState {
   const draft = { ...state.chemical.draft, [field]: value };
-  if (field === "analyteSubstanceId" && getSubstanceById(value)?.aminoAcid !== undefined) {
-    draft.titrantSubstanceId = "naoh";
+  if (
+    (field === "analyteSubstanceId" || field === "titrantSubstanceId") &&
+    !hasSecondAnalyteComponent(draft) && getSubstanceById(value)?.aminoAcid !== undefined
+  ) {
+    const partnerField = field === "analyteSubstanceId" ? "titrantSubstanceId" : "analyteSubstanceId";
+    draft[partnerField] = "naoh";
   }
   const forcedMaxVolumeMl = state.rendering.xRangeMode === "manual"
     ? state.rendering.graphStyle.xMax
@@ -463,8 +467,10 @@ export function addAnalyteComponent(
   state: AppState,
   dependencies: AppDependencies = DEFAULT_APP_DEPENDENCIES,
 ): AppState {
-  if (hasSecondAnalyteComponent(state.chemical.draft)) return state;
-  if (getSubstanceById(state.chemical.draft.analyteSubstanceId)?.aminoAcid !== undefined) return state;
+  const { draft: current } = state.chemical;
+  if (hasSecondAnalyteComponent(current)) return state;
+  if (getSubstanceById(current.analyteSubstanceId)?.aminoAcid !== undefined ||
+      getSubstanceById(current.titrantSubstanceId)?.aminoAcid !== undefined) return state;
   const secondSubstanceId = SUBSTANCES.find(
     ({ id }) => id !== state.chemical.draft.analyteSubstanceId,
   )?.id ?? state.chemical.draft.analyteSubstanceId;
